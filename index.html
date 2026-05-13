@@ -3,10 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Line Distribution Editor Ultra Premium</title>
+<title>Line Distribution Editor - YouTube Edition</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
 <style>
-/* Sistema de Tema (Claro / Oscuro) Manual */
 :root {
   --color-background-primary: #ffffff;
   --color-background-secondary: #f7f7f8;
@@ -15,8 +14,6 @@
   --color-border-tertiary: #e2e2e2;
   --color-text-primary: #1a1a1a;
   --color-text-secondary: #888780;
-  --color-waveform-base: #d1d1d1;
-  --color-waveform-progress: rgba(127, 119, 221, 0.4);
 }
 body.dark-theme {
   --color-background-primary: #1a1a18;
@@ -26,8 +23,6 @@ body.dark-theme {
   --color-border-tertiary: #333333;
   --color-text-primary: #e8e6de;
   --color-text-secondary: #666666;
-  --color-waveform-base: #4a4a4a;
-  --color-waveform-progress: rgba(127, 119, 221, 0.5);
 }
 
 body { font-family: system-ui, -apple-system, sans-serif; background: var(--color-background-primary); color: var(--color-text-primary); transition: background 0.3s, color 0.3s; }
@@ -47,7 +42,6 @@ textarea{resize:vertical;padding:8px;}
 .btn-d{color:#E24B4A;border-color:#E24B4A33;}
 .btn-d:hover{background:#FCEBEB;}
 
-/* Grid ajustado */
 .seg-grid {
   display: grid;
   grid-template-columns: 20px 20px 90px 90px 1fr 110px 64px;
@@ -57,29 +51,29 @@ textarea{resize:vertical;padding:8px;}
 }
 .seg-grid.active-cap { border-color: var(--color-border-secondary); background: var(--color-background-tertiary); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 .drag-handle { cursor: grab; color: var(--color-text-secondary); display:flex; align-items:center; justify-content:center; }
-
 .seg-hdr{font-size:11px;color:var(--color-text-secondary);}
 .swatch{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;flex-shrink:0;}
 .swatch.on{border-color:var(--color-text-primary);}
 .hint{font-size:12px;color:var(--color-text-secondary);margin-top:5px;}
 
-/* Anim Wrap y Waveform */
-#anim-wrap{position:relative; border-radius:12px; overflow:hidden; padding:1.25rem; min-height: 200px; border:1px solid var(--color-border-tertiary);}
+/* Split Layout */
+#split-layout { display: flex; gap: 16px; flex-wrap: wrap; align-items: stretch; margin-bottom: 1rem;}
+#yt-container { flex: 1; min-width: 320px; border-radius: 12px; overflow: hidden; background: #000; border: 1px solid var(--color-border-tertiary); aspect-ratio: 16/9; box-shadow: 0 4px 12px rgba(0,0,0,0.1);}
+
+#anim-wrap{ flex: 1; min-width: 320px; position:relative; border-radius:12px; overflow:hidden; padding:1.25rem; border:1px solid var(--color-border-tertiary);}
 #anim-bg{position:absolute; top:0; left:0; right:0; bottom:0; background-size:cover; background-position:center; z-index:0;}
 #anim-overlay{position:absolute; top:0; left:0; right:0; bottom:0; background:var(--color-background-secondary); z-index:1; transition:background 0.3s;}
-#anim-content{position:relative; z-index:2;}
+#anim-content{position:relative; z-index:2; height: 100%; display: flex; flex-direction: column;}
 
-/* LÓGICA DE GRISÁCEO (TRANSICIÓN MÁS LARGA) */
 .hbar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px; transition: filter 2s ease, opacity 2s ease;}
 .hbar-name{font-size:13px;font-weight:600;min-width:100px;text-align:right;flex-shrink:0; text-shadow: 0px 1px 3px rgba(0,0,0,0.3);}
 .hbar-track{flex:1;background:var(--color-background-primary);border-radius:6px;height:24px;overflow:hidden;border:0.5px solid var(--color-border-tertiary); box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);}
 .hbar-fill{height:100%;border-radius:4px;width:0%;}
 .hbar-secs{font-size:12px;min-width:38px;text-align:right;flex-shrink:0;color:var(--color-text-primary); font-weight:500;}
 
-#ticker-container{border-top:1px solid var(--color-border-tertiary);padding-top:1rem;margin-top:1rem;min-height:90px; display:flex; flex-direction:column; gap:6px;}
+#ticker-container{border-top:1px solid var(--color-border-tertiary);padding-top:1rem;margin-top:auto;min-height:90px; display:flex; flex-direction:column; gap:6px;}
 #lyrics-render-area{display:flex; flex-direction:column; gap:8px;}
 
-/* EFECTO ESCRIBIENDO MODIFICADO AL 70% */
 @keyframes typingPulse {
   0% { opacity: 0.7; }
   50% { opacity: 1; }
@@ -87,17 +81,9 @@ textarea{resize:vertical;padding:8px;}
 }
 .typing-anim { animation: typingPulse 1.5s infinite ease-in-out; }
 
-/* WAVEFORM UI */
-#waveform-container {
-  position: relative; width: 100%; height: 60px; margin: 1rem 0 .75rem;
-  background: var(--color-background-secondary); border-radius: 8px; overflow: hidden;
-  border: 1px solid var(--color-border-tertiary); cursor: pointer;
-}
-#waveform-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-#waveform-progress { position: absolute; top: 0; left: 0; width: 0%; height: 100%; background: var(--color-waveform-progress); pointer-events: none; }
-#waveform-playhead { position: absolute; top: 0; left: 0%; width: 2px; height: 100%; background: #E24B4A; pointer-events: none; box-shadow: 0 0 4px rgba(226, 75, 74, 0.8);}
-#time-label{font-size:13px;color:var(--color-text-secondary);min-width:80px;text-align:right; font-family:monospace; display:block; margin-bottom:1rem;}
-
+#scrubber-row{display:flex;align-items:center;gap:10px;margin:1rem 0 .75rem;}
+#scrubber{flex:1;}
+#time-label{font-size:13px;color:var(--color-text-secondary);min-width:80px;text-align:right; font-family:monospace;}
 .ctrl-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
 </style>
 </head>
@@ -107,13 +93,13 @@ textarea{resize:vertical;padding:8px;}
 <div class="tabs">
   <button class="tab active" onclick="sw('members')">1. Miembros</button>
   <button class="tab" onclick="sw('segments')">2. Segmentos</button>
-  <button class="tab" onclick="sw('animate')">3. Animación Premium</button>
+  <button class="tab" onclick="sw('animate')">3. Animacion Video</button>
   <button class="tab" onclick="sw('stats')">4. Stats</button>
 </div>
 
 <div id="tab-members" class="panel active">
   <div class="stitle">Miembros del grupo</div>
-  <p class="hint" style="margin-bottom:10px;">Añade "ALL" para coros. Miembros unidos por "+" (ej: "Jin + Suga"). <b>Haz clic en el círculo de color para subir foto.</b></p>
+  <p class="hint" style="margin-bottom:10px;">Añade "ALL" para coros. Miembros unidos por "+" (ej: "Jin + Suga"). Haz clic en el circulo de color para subir foto.</p>
   <div id="mlist"></div>
   <div style="display:flex;gap:8px;margin-top:.5rem;">
     <input type="text" id="nm-inp" placeholder="Nombre del miembro" style="flex:1;" />
@@ -122,25 +108,25 @@ textarea{resize:vertical;padding:8px;}
 </div>
 
 <div id="tab-segments" class="panel">
-  <div class="stitle">Canción y Audio Sincronizado</div>
+  <div class="stitle">Cancion y Sincronizacion de YouTube</div>
   <div class="card" style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;">
-    <div><label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:3px;">Título de la Canción</label>
-    <input type="text" id="song-title" placeholder="Ej: Mi Canción Genial" style="width:190px;" /></div>
-    <div><label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:3px;">Duración (s)</label>
+    <div><label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:3px;">Titulo de la Cancion</label>
+    <input type="text" id="song-title" placeholder="Ej: Mi Cancion Genial" style="width:190px;" /></div>
+    <div><label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:3px;">Duracion (s)</label>
     <input type="number" id="song-dur" value="200" min="10" style="width:80px;" /></div>
     <div style="flex:1; min-width:250px;">
-      <label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:3px;" id="audio-label">Cargar MP3 para visualizar ondas y guardar en el proyecto</label>
+      <label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:3px;">Enlace de YouTube</label>
       <div style="display:flex; gap:8px; align-items:center;">
-        <input type="file" id="audio-upload" accept="audio/*" onchange="loadAudio(event)" style="font-size:12px; padding:4px; flex:1; max-width:180px;" />
-        <audio id="main-audio" controls style="height:32px; flex:2;"></audio>
+        <input type="text" id="yt-url" placeholder="https://www.youtube.com/watch?v=... o URL de Shorts" style="flex:1;" />
+        <button class="btn btn-p" onclick="loadYouTubeVideo()"><i class="ti ti-brand-youtube"></i> Cargar Video</button>
       </div>
     </div>
   </div>
 
-  <div class="stitle" style="margin-top:1rem;">Generador Rápido de Letra</div>
+  <div class="stitle" style="margin-top:1rem;">Generador Rapido de Letra</div>
   <div class="card" style="display:flex;flex-direction:column;gap:8px;">
-    <textarea id="bulk-lyrics" rows="3" placeholder="Pega aquí tu letra. Cada línea creará un segmento nuevo con 5 segundos por defecto." style="width:100%;"></textarea>
-    <button class="btn" onclick="addBulkLyrics()" style="align-self:flex-start;"><i class="ti ti-list-check"></i> Generar líneas</button>
+    <textarea id="bulk-lyrics" rows="3" placeholder="Pega aqui tu letra. Cada linea creara un segmento nuevo con 5 segundos por defecto." style="width:100%;"></textarea>
+    <button class="btn" onclick="addBulkLyrics()" style="align-self:flex-start;"><i class="ti ti-list-check"></i> Generar lineas</button>
   </div>
 
   <div class="stitle" style="margin-top:1rem; display:flex; justify-content:space-between; align-items:center;">
@@ -148,47 +134,51 @@ textarea{resize:vertical;padding:8px;}
     <button class="btn btn-d" onclick="removeAllS()" style="padding:4px 8px; font-size:11px;"><i class="ti ti-trash"></i> Vaciar todo</button>
   </div>
   
-  <p class="hint" style="margin-bottom:10px;"><b>ATAJOS PROFESIONALES:</b> Selecciona el radio button. 👉 <b>ESPACIO:</b> Play/Pausa | 👉 <b>Tecla I:</b> Captura Inicio | 👉 <b>Tecla O:</b> Captura Fin y avanza.</p>
+  <p class="hint" style="margin-bottom:10px;">Selecciona el circulo para activar los atajos. ESPACIO: Play/Pausa | Tecla I: Captura Inicio | Tecla O: Captura Fin y avanza.</p>
 
   <div class="seg-grid" style="padding:0 6px;margin-bottom:3px;border:none;">
     <span></span><span></span><span class="seg-hdr">Inicio (s)</span><span class="seg-hdr">Fin (s)</span>
-    <span class="seg-hdr">Letra principal y Traducción</span><span class="seg-hdr">Miembro</span><span></span>
+    <span class="seg-hdr">Letra principal y Traduccion</span><span class="seg-hdr">Miembro</span><span></span>
   </div>
   <div id="slist"></div>
-  <button class="btn" onclick="addS()" style="margin-top:.4rem;"><i class="ti ti-plus"></i> Añadir línea al final</button>
+  <button class="btn" onclick="addS()" style="margin-top:.4rem;"><i class="ti ti-plus"></i> Añadir linea al final</button>
 </div>
 
 <div id="tab-animate" class="panel">
   <div style="margin-bottom:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
     <button class="btn" onclick="toggleTheme()"><i class="ti ti-moon"></i> Tema Oscuro/Claro</button>
     <label class="btn" style="cursor:pointer;">
-      <i class="ti ti-photo"></i> Poner Fondo Personalizado
+      <i class="ti ti-photo"></i> Poner Fondo Grafica
       <input type="file" accept="image/*" style="display:none;" onchange="setBgImage(event)">
     </label>
     <button class="btn btn-d" onclick="recordScreen()"><i class="ti ti-video"></i> Exportar / Grabar Pestaña</button>
   </div>
 
-  <div id="anim-wrap">
-    <div id="anim-bg"></div>
-    <div id="anim-overlay"></div>
-    <div id="anim-content">
-      <div id="bars-container" style="display:flex;flex-direction:column;"></div>
-      <div id="ticker-container">
-        <div style="display:flex; justify-content:flex-end;">
-          <span id="ticker-time" style="font-size:12px;color:var(--color-text-secondary);font-family:monospace;background:var(--color-background-secondary);padding:2px 6px;border-radius:4px;opacity:0.8;">0.00s</span>
+  <div id="split-layout">
+    <div id="yt-container">
+      <div id="yt-player"></div>
+    </div>
+    
+    <div id="anim-wrap">
+      <div id="anim-bg"></div>
+      <div id="anim-overlay"></div>
+      <div id="anim-content">
+        <div id="bars-container" style="display:flex;flex-direction:column;"></div>
+        <div id="ticker-container">
+          <div style="display:flex; justify-content:flex-end;">
+            <span id="ticker-time" style="font-size:12px;color:var(--color-text-secondary);font-family:monospace;background:var(--color-background-secondary);padding:2px 6px;border-radius:4px;opacity:0.8;">0.00s</span>
+          </div>
+          <div id="lyrics-render-area"><span style="color:var(--color-text-secondary);">—</span></div>
+          <div id="typing-indicator" style="font-size:13px; color:var(--color-text-secondary); min-height:18px; margin-top:8px; opacity:0; transition: opacity 0.3s; font-style:italic;"></div>
         </div>
-        <div id="lyrics-render-area"><span style="color:var(--color-text-secondary);">—</span></div>
-        <div id="typing-indicator" style="font-size:13px; color:var(--color-text-secondary); min-height:18px; margin-top:8px; opacity:0; transition: opacity 0.3s; font-style:italic;"></div>
       </div>
     </div>
   </div>
   
-  <div id="waveform-container" onclick="seekWaveform(event)">
-    <canvas id="waveform-canvas"></canvas>
-    <div id="waveform-progress"></div>
-    <div id="waveform-playhead"></div>
+  <div id="scrubber-row">
+    <input type="range" id="scrubber" min="0" max="200" value="0" step="0.01" oninput="scrub(+this.value)" />
+    <span id="time-label">0:00 / 0:00</span>
   </div>
-  <div style="display:flex; justify-content:flex-end;"><span id="time-label">0:00 / 0:00</span></div>
   
   <div class="ctrl-row">
     <button class="btn btn-p" id="play-btn" onclick="togglePlay()"><i class="ti ti-player-play"></i> Play</button>
@@ -219,9 +209,11 @@ textarea{resize:vertical;padding:8px;}
 </div>
 </div>
 
+<script src="https://www.youtube.com/iframe_api"></script>
+
 <script>
 if(window.matchMedia('(prefers-color-scheme: dark)').matches) document.body.classList.add('dark-theme');
-function toggleTheme() { document.body.classList.toggle('dark-theme'); drawWaveform(); renderStats(); }
+function toggleTheme() { document.body.classList.toggle('dark-theme'); renderStats(); }
 
 const PAL=['#7F77DD','#1D9E75','#D85A30','#D4537E','#378ADD','#639922','#BA7517','#E24B4A','#888780','#985fd4'];
 let members=[
@@ -231,99 +223,80 @@ let members=[
   {name:'ALL',color:PAL[8], avatar:''}, 
 ];
 let segments=[
-  {start:0,end:5.50,lyric:'Jin starts the song', translation:'Jin empieza la canción', memberId:0},
-  {start:10.50,end:15.00,lyric:'Suga comes in later', translation:'Suga entra más tarde', memberId:1}, 
+  {start:0,end:5.50,lyric:'Jin starts the song', translation:'Jin empieza la cancion', memberId:0},
+  {start:10.50,end:15.00,lyric:'Suga comes in later', translation:'Suga entra mas tarde', memberId:1}, 
 ];
 
 let playing=false,curTime=0,lastTS=null,animId=null,playSpeed=1;
 let displayWidths=[], displayOrders=[];
 let donutAngles=[], donutAnimId=null;
 let activeCapIdx = 0; 
-let audioBuffer = null; 
-
 let projectBg = '';
-let projectAudio = '';
+let currentVideoId = '';
 
-// --- AUDIO DECODING & WAVEFORM ---
-async function loadAudio(e) {
-  const file = e.target.files[0];
-  if(!file) return;
-  document.getElementById('audio-label').textContent = "Cargando y procesando...";
-  
-  const reader = new FileReader();
-  reader.onload = async (ev) => {
-    projectAudio = ev.target.result; 
-    const aud = document.getElementById('main-audio');
-    aud.src = projectAudio;
-    aud.onloadedmetadata = () => { document.getElementById('song-dur').value = Math.ceil(aud.duration); };
+// --- YOUTUBE API INTEGRATION ---
+let ytPlayer = null;
+let isYtReady = false;
 
-    try {
-      const arrayBuffer = await file.arrayBuffer();
-      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-      document.getElementById('audio-label').textContent = "Audio listo.";
-      drawWaveform();
-    } catch(err) {
-      document.getElementById('audio-label').textContent = "Error al procesar ondas.";
-    }
-  };
-  reader.readAsDataURL(file);
+function onYouTubeIframeAPIReady() {
+  isYtReady = true;
 }
 
-async function dataURItoArrayBuffer(dataURI) {
-  return new Promise((resolve) => {
-      setTimeout(() => {
-          const byteString = atob(dataURI.split(',')[1]);
-          const len = byteString.length;
-          const bytes = new Uint8Array(len);
-          for (let i = 0; i < len; i++) { bytes[i] = byteString.charCodeAt(i); }
-          resolve(bytes.buffer);
-      }, 0);
-  });
+function extractVideoID(url){
+  if (url.length === 11) return url;
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|shorts\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+  return (match && match[1]) ? match[1] : null;
 }
 
-function drawWaveform() {
-  if(!audioBuffer) return;
-  const canvas = document.getElementById('waveform-canvas');
-  const container = document.getElementById('waveform-container');
-  canvas.width = container.clientWidth;
-  canvas.height = container.clientHeight;
+function loadYouTubeVideo() {
+  const url = document.getElementById('yt-url').value;
+  const vid = extractVideoID(url);
+  if(!vid) {
+    alert("Por favor introduce una URL de YouTube valida.");
+    return;
+  }
   
-  const ctx = canvas.getContext('2d');
-  const data = audioBuffer.getChannelData(0);
-  const step = Math.ceil(data.length / canvas.width);
-  const amp = canvas.height / 2;
+  currentVideoId = url;
 
-  ctx.clearRect(0,0, canvas.width, canvas.height);
-  const isDark = document.body.classList.contains('dark-theme');
-  ctx.fillStyle = isDark ? '#4a4a4a' : '#d1d1d1'; 
-
-  for(let i=0; i<canvas.width; i++) {
-      let min = 1.0, max = -1.0;
-      for(let j=0; j<step; j++) {
-          const datum = data[(i*step)+j];
-          if(datum < min) min = datum;
-          if(datum > max) max = datum;
+  if(ytPlayer) {
+    ytPlayer.loadVideoById(vid);
+  } else {
+    ytPlayer = new YT.Player('yt-player', {
+      height: '100%',
+      width: '100%',
+      videoId: vid,
+      playerVars: { 'playsinline': 1, 'controls': 1, 'disablekb': 0, 'rel': 0 },
+      events: {
+        'onReady': onPlayerReady,
+        'onStateChange': onPlayerStateChange
       }
-      ctx.fillRect(i, (1+min)*amp, 1, Math.max(1, (max-min)*amp));
+    });
   }
 }
 
-window.addEventListener('resize', () => {
-  if(document.getElementById('tab-animate').classList.contains('active')) drawWaveform();
-});
+function onPlayerReady(event) {
+  document.getElementById('song-dur').value = Math.ceil(event.target.getDuration());
+}
 
-function seekWaveform(e) {
-  const rect = e.currentTarget.getBoundingClientRect();
-  const pct = (e.clientX - rect.left) / rect.width;
-  const dur = +document.getElementById('song-dur').value || 200;
-  scrub(pct * dur);
+function onPlayerStateChange(event) {
+  if (event.data == YT.PlayerState.PLAYING && !playing) {
+    playing = true;
+    document.getElementById('play-btn').innerHTML='<i class="ti ti-player-pause"></i> Pausa';
+    animId = requestAnimationFrame(loop);
+  } else if ((event.data == YT.PlayerState.PAUSED || event.data == YT.PlayerState.ENDED) && playing) {
+    playing = false;
+    document.getElementById('play-btn').innerHTML='<i class="ti ti-player-play"></i> Play';
+    if(animId) cancelAnimationFrame(animId);
+  }
 }
 
 // --- ATAJOS DE TECLADO ---
 document.addEventListener('keydown', e => {
   if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-  if(e.code === 'Space') { e.preventDefault(); togglePlay(); }
+  if(e.code === 'Space') { 
+    e.preventDefault(); 
+    togglePlay(); 
+  }
   if(e.code === 'KeyI') { e.preventDefault(); if(segments[activeCapIdx]) captureT(activeCapIdx, 'start'); }
   if(e.code === 'KeyO') { 
     e.preventDefault(); 
@@ -336,28 +309,33 @@ document.addEventListener('keydown', e => {
 });
 
 function captureT(index, prop) {
-  const aud = document.getElementById('main-audio');
-  let t = (aud && aud.readyState > 0) ? aud.currentTime : curTime;
+  let t = 0;
+  if (ytPlayer && ytPlayer.getPlayerState) {
+    t = ytPlayer.getCurrentTime();
+  } else {
+    t = curTime;
+  }
   segments[index][prop] = parseFloat(t.toFixed(2)); 
   renderS();
 }
-function changeSpeed(val) { playSpeed = +val; const aud = document.getElementById('main-audio'); if(aud) aud.playbackRate = playSpeed; }
+
+function changeSpeed(val) { 
+  playSpeed = +val; 
+  if(ytPlayer && ytPlayer.setPlaybackRate) ytPlayer.setPlaybackRate(playSpeed); 
+}
 
 // --- UI PRINCIPAL ---
 function applyBg() {
   if(!projectBg) return;
   document.getElementById('anim-bg').style.backgroundImage = `url(${projectBg})`;
   document.getElementById('anim-overlay').style.background = 'rgba(0,0,0,0.7)';
-  document.body.classList.add('dark-theme'); renderStats(); drawWaveform();
+  document.body.classList.add('dark-theme'); renderStats();
 }
 
 function setBgImage(e) {
   const file = e.target.files[0]; if(!file) return;
   const reader = new FileReader();
-  reader.onload = ev => {
-    projectBg = ev.target.result;
-    applyBg();
-  };
+  reader.onload = ev => { projectBg = ev.target.result; applyBg(); };
   reader.readAsDataURL(file);
 }
 
@@ -386,7 +364,7 @@ function sw(name){
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',ns[i]===name));
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
-  if(name==='animate'){initDisplayState();buildBars();drawWaveform();updateAnim(curTime);}
+  if(name==='animate'){initDisplayState();buildBars();updateAnim(curTime);}
   if(name==='stats')renderStats();
 }
 
@@ -400,7 +378,7 @@ function renderM(){
     const cols=PAL.map((c,ci)=>`<div class="swatch${m.color===c?' on':''}" style="background:${c}" onclick="setCol(${i},${ci})"></div>`).join('');
     
     d.innerHTML=`
-      <div style="position:relative; width:28px; height:28px; border-radius:50%; overflow:hidden; border:2px solid ${m.color}; flex-shrink:0;" title="Click para subir foto">
+      <div style="position:relative; width:28px; height:28px; border-radius:50%; overflow:hidden; border:2px solid ${m.color}; flex-shrink:0;">
          <img src="${m.avatar || ''}" style="width:100%; height:100%; object-fit:cover; display:${m.avatar ? 'block' : 'none'};">
          <div style="width:100%; height:100%; background:${m.color}; display:${m.avatar ? 'none' : 'block'};"></div>
          <input type="file" accept="image/*" style="position:absolute; top:0; left:0; opacity:0; width:100%; height:100%; cursor:pointer;" onchange="handleAvatarUpload(event, ${i})">
@@ -439,7 +417,7 @@ function renderS(){
       </div>
       <div style="display:flex; flex-direction:column; gap:4px;">
         <input type="text" placeholder="Letra Principal" value="${s.lyric}" onchange="segments[${i}].lyric=this.value;" />
-        <input type="text" placeholder="Traducción (Opcional)" value="${s.translation||''}" onchange="segments[${i}].translation=this.value;" />
+        <input type="text" placeholder="Traduccion (Opcional)" value="${s.translation||''}" onchange="segments[${i}].translation=this.value;" />
       </div>
       <select onchange="segments[${i}].memberId=+this.value;this.style.borderLeft='3px solid '+(members[+this.value]||members[0]).color;" style="border-left:3px solid ${m.color};width:100%;height:100%;">${mopts(s.memberId)}</select>
       <div style="display:flex; gap:4px;">
@@ -450,7 +428,7 @@ function renderS(){
   });
 }
 
-function addS(){const last=segments[segments.length-1];const st=last?last.end:0;segments.push({start:st,end:st+12,lyric:'Nueva línea...',translation:'',memberId:0});renderS();}
+function addS(){const last=segments[segments.length-1];const st=last?last.end:0;segments.push({start:st,end:st+12,lyric:'Nueva linea...',translation:'',memberId:0});renderS();}
 function insertS(index){
   const curr = segments[index]; const st = curr ? curr.end : 0;
   segments.splice(index + 1, 0, { start: st, end: st + 3, lyric: 'Nueva...', translation:'', memberId: curr.memberId });
@@ -515,23 +493,18 @@ function updateAnim(t){
   const dur=+document.getElementById('song-dur').value||200;
   document.getElementById('time-label').textContent=fmt(t)+' / '+fmt(dur);
   document.getElementById('ticker-time').textContent = t.toFixed(2) + 's';
-  
-  // Waveform progress
-  const pctLine = (t / dur) * 100;
-  document.getElementById('waveform-progress').style.width = pctLine + '%';
-  document.getElementById('waveform-playhead').style.left = pctLine + '%';
+  document.getElementById('scrubber').max = dur;
+  document.getElementById('scrubber').value = t;
 
   const totals=computeTotals(t);
   const validTotals = totals.filter((_, i) => members[i].name !== 'ALL' && !members[i].name.includes('+'));
   const maxT=Math.max(...validTotals, 1);
   const order=[...members.map((_,i)=>i)].sort((a,b)=>totals[b]-totals[a]);
 
-  // CALCULAR CUANDO TERMINAN DEFINITIVAMENTE LOS INTEGRANTES (Omitiendo la etiqueta ALL)
   let maxEnds = members.map(()=>0);
   segments.forEach(s => {
       const m = members[s.memberId];
       if(m && m.name === 'ALL'){
-        // Ignoramos ALL
       } else if (m && m.name.includes('+')) {
         const subNames = m.name.split('+').map(n => n.trim().toLowerCase());
         members.forEach((other, idx) => { if (subNames.includes(other.name.toLowerCase())) maxEnds[idx] = Math.max(maxEnds[idx], s.end); });
@@ -551,7 +524,6 @@ function updateAnim(t){
     fill.style.width=displayWidths[i].toFixed(2)+'%'; fill.style.transition='none';
     secs.textContent=totals[i].toFixed(1)+'s';
     
-    // EFECTO GRISÁCEO SI EL CANTANTE YA NO TIENE MÁS LÍNEAS PROPIAS
     if (t > maxEnds[i] && maxEnds[i] > 0) {
        row.style.filter = 'grayscale(50%)';
        row.style.opacity = '0.7';
@@ -567,12 +539,10 @@ function updateAnim(t){
   const actives = segments.filter(s => t >= s.start && t < s.end);
   renderKaraokeLyrics(actives, t);
 
-  // --- LÓGICA DEL INDICADOR "ESTÁ ESCRIBIENDO..." ---
   let recentSingers = [];
   if (actives.length > 0) {
     recentSingers = actives.map(s => s.memberId);
   } else {
-    // Si nadie canta ahora, buscamos a los últimos que cantaron justo antes de este segundo
     const past = segments.filter(s => s.end <= t);
     if (past.length > 0) {
       const latestEnd = Math.max(...past.map(s => s.end));
@@ -581,14 +551,11 @@ function updateAnim(t){
   }
 
   let typingHTML = '';
-  // Miramos hasta 5 segundos en el futuro
   const upcoming = segments.filter(s => s.start > t && s.start <= t + 5);
   
   if (upcoming.length > 0) {
     const nextStart = Math.min(...upcoming.map(s => s.start));
     const nextGroup = upcoming.filter(s => s.start === nextStart);
-    
-    // Filtramos para que no salgan los que ya estaban cantando
     const uniqueTyperIds = [...new Set(nextGroup.map(s => s.memberId))].filter(id => !recentSingers.includes(id));
     
     if (uniqueTyperIds.length > 0) {
@@ -596,10 +563,8 @@ function updateAnim(t){
       const namesHTML = uniqueTyperIds.map(id => {
         const m = members[id] || members[0];
         let displayName = m.name;
-        
         if (m.name === 'ALL') {
-           displayName = 'Todos';
-           numPeople += 2; // Para forzar plural
+           displayName = 'Todos'; numPeople += 2;
         } else if (m.name.includes('+')) {
            numPeople += m.name.split('+').length;
         } else {
@@ -608,7 +573,7 @@ function updateAnim(t){
         return `<span style="color:${m.color}; font-weight:600;">${displayName}</span>`;
       }).join(', ');
       
-      const verb = numPeople > 1 ? 'están' : 'está';
+      const verb = numPeople > 1 ? 'estan' : 'esta';
       typingHTML = `<span class="typing-anim">${namesHTML} ${verb} escribiendo...</span>`;
     }
   }
@@ -624,7 +589,6 @@ function updateAnim(t){
   }
 }
 
-// --- KARAOKE SUAVE ---
 function renderKaraokeLyrics(actives, t) {
   const area = document.getElementById('lyrics-render-area');
   
@@ -669,10 +633,9 @@ function renderKaraokeLyrics(actives, t) {
 
 function loop(ts){
   if(!playing)return;
-  const aud = document.getElementById('main-audio');
   
-  if(aud && aud.readyState > 0 && !aud.paused) {
-    curTime = aud.currentTime;
+  if(ytPlayer && ytPlayer.getPlayerState && ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) {
+    curTime = ytPlayer.getCurrentTime();
   } else {
     if(lastTS===null)lastTS=ts;
     const dt=(ts-lastTS)/1000*playSpeed;lastTS=ts;
@@ -685,7 +648,8 @@ function loop(ts){
   
   if(curTime>=dur){
     playing=false; document.getElementById('play-btn').innerHTML='<i class="ti ti-player-play"></i> Play'; lastTS=null;
-    if(aud && !aud.paused) aud.pause(); return;
+    if(ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo();
+    return;
   }
   animId=requestAnimationFrame(loop);
 }
@@ -695,15 +659,17 @@ function togglePlay(){
   if(curTime>=dur)curTime=0;
   playing=!playing;
   const btn=document.getElementById('play-btn');
-  const aud=document.getElementById('main-audio');
   
   if(playing){
     btn.innerHTML='<i class="ti ti-player-pause"></i> Pausa'; lastTS=null;
-    if(aud && aud.readyState > 0) { aud.currentTime = curTime; aud.playbackRate = playSpeed; aud.play(); }
+    if(ytPlayer && ytPlayer.playVideo) {
+       ytPlayer.seekTo(curTime);
+       ytPlayer.playVideo();
+    }
     animId=requestAnimationFrame(loop);
   } else {
     btn.innerHTML='<i class="ti ti-player-play"></i> Play';
-    if(aud && !aud.paused) aud.pause();
+    if(ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo();
     if(animId)cancelAnimationFrame(animId);
   }
 }
@@ -711,57 +677,45 @@ function togglePlay(){
 function resetAnim(){
   playing=false;if(animId)cancelAnimationFrame(animId); curTime=0;lastTS=null;
   document.getElementById('play-btn').innerHTML='<i class="ti ti-player-play"></i> Play';
-  const aud=document.getElementById('main-audio'); if(aud) { aud.pause(); aud.currentTime = 0; }
+  if(ytPlayer && ytPlayer.pauseVideo) { ytPlayer.pauseVideo(); ytPlayer.seekTo(0); }
   initDisplayState();buildBars();updateAnim(0);
 }
 
 function scrub(v){
-  curTime=v; const aud=document.getElementById('main-audio');
-  if(aud && aud.readyState > 0) aud.currentTime = v;
+  curTime=v; 
+  if(ytPlayer && ytPlayer.seekTo) {
+    ytPlayer.seekTo(v);
+  }
   updateAnim(v);
 }
 
-// --- GRABACIÓN DE VÍDEO CON AUDIO ---
+// --- GRABACION DE PANTALLA ---
 async function recordScreen() {
   try {
+    alert("NOTA IMPORTANTE:\n\nPara que la grabacion tenga sonido, es IMPRESCINDIBLE que en la siguiente pantalla actives la casilla 'Compartir audio de la pestaña'.\n\nSi no la activas, el video se guardara mudo.");
     const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: { displaySurface: "browser" }, audio: true });
-    const tracks = [...displayStream.getVideoTracks()];
-
-    const aud = document.getElementById('main-audio');
-    let audioStream = null;
-    if (aud) {
-      audioStream = aud.captureStream ? aud.captureStream() : (aud.mozCaptureStream ? aud.mozCaptureStream() : null);
+    
+    if (displayStream.getAudioTracks().length === 0) {
+      alert("No se ha detectado audio. Recuerda marcar 'Compartir audio de la pestaña'.");
     }
 
-    if (audioStream && audioStream.getAudioTracks().length > 0) {
-      tracks.push(audioStream.getAudioTracks()[0]);
-    } else if (displayStream.getAudioTracks().length > 0) {
-      tracks.push(displayStream.getAudioTracks()[0]);
-    } else {
-      alert("⚠️ Aviso: Tu navegador podría no guardar el sonido.\nAsegúrate de marcar 'Compartir audio de la pestaña' en la ventana emergente.");
-    }
-
-    const combinedStream = new MediaStream(tracks);
-    const recorder = new MediaRecorder(combinedStream);
+    const recorder = new MediaRecorder(displayStream);
     const chunks = [];
     
     recorder.ondataavailable = e => { if(e.data.size > 0) chunks.push(e.data); };
     recorder.onstop = () => {
-      // Usar nombre de la canción para el vídeo también
       const songTitle = document.getElementById('song-title').value.trim();
       const fileName = songTitle ? songTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '_video.webm' : 'line_distribution_video.webm';
 
       const blob = new Blob(chunks, { type: 'video/webm' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a'); a.href = url; a.download = fileName; a.click();
-      tracks.forEach(t => t.stop());
+      displayStream.getTracks().forEach(t => t.stop());
     };
     
     recorder.start();
-    alert("🔴 Grabación iniciada.\n\n1. Oculta el cartel flotante.\n2. Dale a PLAY en el editor.\n3. Cuando acabe la música, pulsa 'Dejar de compartir' para descargar tu vídeo con sonido.");
   } catch (err) { 
     console.error(err);
-    alert("Grabación cancelada o sin permisos."); 
   }
 }
 
@@ -836,14 +790,10 @@ function animateDonut(canvas,targets,totals,total,frame){
   if(!done)donutAnimId=requestAnimationFrame(()=>animateDonut(canvas,targets,totals,total,frame+1));
 }
 
-// --- IMPORTAR Y EXPORTAR PROYECTO COMPLETO ---
+// --- IMPORTAR Y EXPORTAR ---
 function exportData() {
   const songTitle = document.getElementById('song-title').value.trim();
-  
-  // Limpiamos el nombre para que sea un nombre de archivo seguro
-  const fileName = songTitle 
-    ? songTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '_proyecto.json' 
-    : 'line_distribution_proyecto.json';
+  const fileName = songTitle ? songTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '_proyecto.json' : 'line_distribution_proyecto.json';
 
   const data = { 
     members: members, 
@@ -851,7 +801,7 @@ function exportData() {
     songTitle: songTitle, 
     songDur: document.getElementById('song-dur').value,
     projectBg: projectBg,     
-    projectAudio: projectAudio 
+    currentVideoId: currentVideoId 
   };
   
   const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
@@ -873,31 +823,17 @@ function importData(e) {
       if (data.segments) segments = data.segments;
       if (data.songTitle !== undefined) document.getElementById('song-title').value = data.songTitle;
       if (data.songDur !== undefined) document.getElementById('song-dur').value = data.songDur;
-      
-      // Restauramos el Fondo
       if (data.projectBg) { projectBg = data.projectBg; applyBg(); }
       
-      // Restauramos el Audio
-      if (data.projectAudio) {
-        document.getElementById('audio-label').textContent = "Restaurando audio del proyecto...";
-        projectAudio = data.projectAudio;
-        const aud = document.getElementById('main-audio');
-        aud.src = projectAudio;
-        try {
-           const ab = await dataURItoArrayBuffer(projectAudio);
-           const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-           audioBuffer = await audioCtx.decodeAudioData(ab);
-           document.getElementById('audio-label').textContent = "Audio restaurado.";
-           drawWaveform();
-        } catch(err) {
-           document.getElementById('audio-label').textContent = "Error al reconstruir ondas.";
-        }
+      if (data.currentVideoId) {
+        document.getElementById('yt-url').value = data.currentVideoId;
+        loadYouTubeVideo();
       }
 
       renderM(); renderS(); initDisplayState();
       if(document.getElementById('tab-stats').classList.contains('active')) renderStats();
-      if(document.getElementById('tab-animate').classList.contains('active')) { buildBars(); drawWaveform(); updateAnim(0); }
-    } catch (err) { alert("Error al leer el archivo JSON. Verifica que sea válido."); }
+      if(document.getElementById('tab-animate').classList.contains('active')) { buildBars(); updateAnim(0); }
+    } catch (err) { alert("Error al leer el archivo JSON."); }
   };
   reader.readAsText(file); e.target.value = ''; 
 }
