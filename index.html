@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Line Distribution Editor - Ultimate Edition</title>
+<title>Line Distribution Editor</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
 <style>
 :root {
@@ -42,7 +42,6 @@ textarea{resize:vertical;padding:8px;}
 .btn-d{color:#E24B4A;border-color:#E24B4A33;}
 .btn-d:hover{background:#FCEBEB;}
 
-  
 /* Grid ajustado */
 .seg-grid {
   display: grid;
@@ -76,11 +75,17 @@ textarea{resize:vertical;padding:8px;}
 .custom-overlay { position:absolute; top:0; left:0; right:0; bottom:0; background:var(--color-background-secondary); z-index:1; transition:background 0.3s; }
 .content-z { position:relative; z-index:2; height:100%; display:flex; flex-direction:column; overflow:hidden; }
 
-/* Barras con transición suave al gris */
-.hbar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px; transition: filter 2s ease, opacity 2s ease;}
+/* Barras Magnéticas: Sistema dinámico con posicionamiento absoluto y transición suave */
+#bars-container { position: relative; width: 100%; }
+.hbar-row {
+  position: absolute;
+  left: 0; right: 0; height: 38px;
+  display: flex; align-items: center; gap: 10px;
+  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), filter 2s ease, opacity 2s ease;
+}
 .hbar-name{font-size:13px;font-weight:600;min-width:100px;text-align:right;flex-shrink:0; text-shadow: 0px 1px 3px rgba(0,0,0,0.3);}
 .hbar-track{flex:1;background:var(--color-background-primary);border-radius:6px;height:24px;overflow:hidden;border:0.5px solid var(--color-border-tertiary); box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);}
-.hbar-fill{height:100%;border-radius:4px;width:0%;}
+.hbar-fill{height:100%;border-radius:4px;width:0%; transition: width 0.1s linear;}
 .hbar-secs{font-size:12px;min-width:38px;text-align:right;flex-shrink:0;color:var(--color-text-primary); font-weight:500;}
 
 /* CHAT Y ANIMACIONES */
@@ -106,8 +111,8 @@ textarea{resize:vertical;padding:8px;}
 /* Barras de scroll limpias */
 #chat-history::-webkit-scrollbar { width: 6px; }
 #chat-history::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 4px; }
-#bars-container::-webkit-scrollbar { width: 6px; }
-#bars-container::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 4px; }
+#right-panel .content-z::-webkit-scrollbar { width: 6px; }
+#right-panel .content-z::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 4px; }
 </style>
 </head>
 <body>
@@ -198,8 +203,8 @@ textarea{resize:vertical;padding:8px;}
     <div id="right-panel">
       <div class="custom-bg"></div>
       <div class="custom-overlay"></div>
-      <div class="content-z" style="padding: 1.25rem;">
-        <div id="bars-container" style="display:flex; flex-direction:column; flex:1; overflow-y:auto; padding-right:8px;"></div>
+      <div class="content-z" style="padding: 1.25rem; overflow-y:auto;">
+        <div id="bars-container"></div>
       </div>
     </div>
   </div>
@@ -244,11 +249,13 @@ textarea{resize:vertical;padding:8px;}
 if(window.matchMedia('(prefers-color-scheme: dark)').matches) document.body.classList.add('dark-theme');
 function toggleTheme() { document.body.classList.toggle('dark-theme'); renderStats(); }
 
+// 30 Colores disponibles
 const PAL=[
   '#7F77DD','#1D9E75','#D85A30','#D4537E','#378ADD','#639922','#BA7517','#E24B4A','#888780','#985fd4',
   '#F4A261','#2A9D8F','#E76F51','#F4C430','#00B8D9','#D138BF','#88C100','#1F3A93','#FF7F50','#B57EDC',
   '#9B59B6','#34495E','#16A085','#C0392B','#8E44AD','#2980B9','#27AE60','#F39C12','#D35400','#BDC3C7'
 ];
+
 let members=[
   {name:'Jin',color:PAL[0], avatar:''},
   {name:'Suga',color:PAL[1], avatar:''},
@@ -257,7 +264,7 @@ let members=[
 ];
 let segments=[
   {start:0,end:5.50,lyric:'Jin starts the song', translation:'Jin empieza la cancion', memberId:0},
-  {start:10.50,end:15.00,lyric:'Suga comes in later', translation:'Suga entra mas tarde', memberId:1}, 
+  {start:8.00,end:12.00,lyric:'Suga comes in later', translation:'Suga entra mas tarde', memberId:1}, 
 ];
 
 let playing=false,curTime=0,lastTS=null,animId=null,playSpeed=1;
@@ -357,6 +364,7 @@ function captureT(index, prop) {
   } catch(e) {
       t = curTime;
   }
+  if (isNaN(t)) t = 0;
   segments[index][prop] = parseFloat(t.toFixed(2)); 
   renderS();
 }
@@ -534,12 +542,12 @@ function buildBars(){
     let avatarHTML = m.avatar 
        ? `<img src="${m.avatar}" style="width:22px;height:22px;border-radius:50%;object-fit:cover; border:1.5px solid ${m.color}; background:var(--color-background-primary);">` 
        : '';
-    const row=document.createElement('div');row.className='hbar-row';row.id='hrow-'+i; row.style.order=i;
+    const row=document.createElement('div');row.className='hbar-row';row.id='hrow-'+i;
     row.innerHTML=`
       <div class="hbar-name" id="hname-${i}" style="color:${m.color}; display:flex; align-items:center; justify-content:flex-end; gap:6px;">
         <span>${m.name}</span>${avatarHTML}
       </div>
-      <div class="hbar-track"><div class="hbar-fill" id="hfill-${i}" style="background:${m.color};transition:width .55s cubic-bezier(.4,0,.2,1);"></div></div>
+      <div class="hbar-track"><div class="hbar-fill" id="hfill-${i}" style="background:${m.color};"></div></div>
       <div class="hbar-secs" id="hsecs-${i}">0.0s</div>`;
     c.appendChild(row);
   });
@@ -705,6 +713,13 @@ function updateAnim(t){
       }
   });
 
+  const ROW_HEIGHT = 46;
+  const activeCount = members.filter(m => m.name !== 'ALL' && !m.name.includes('+')).length;
+  const barsContainer = document.getElementById('bars-container');
+  if(barsContainer) {
+      barsContainer.style.height = (activeCount * ROW_HEIGHT) + 'px';
+  }
+
   members.forEach((m,i)=>{
     const nameStr = m && m.name ? String(m.name) : '';
     if(nameStr === 'ALL' || nameStr.includes('+')) return; 
@@ -712,9 +727,9 @@ function updateAnim(t){
     displayWidths[i]=lerp(displayWidths[i] || 0, targetWidth, 0.09);
     
     const fill=document.getElementById('hfill-'+i), secs=document.getElementById('hsecs-'+i), row=document.getElementById('hrow-'+i);
-    if(!fill)return;
+    if(!fill || !secs || !row) return;
     
-    fill.style.width=displayWidths[i].toFixed(2)+'%'; fill.style.transition='none';
+    fill.style.width=displayWidths[i].toFixed(2)+'%'; 
     secs.textContent=totals[i].toFixed(1)+'s';
     
     if (t > maxEnds[i] && maxEnds[i] > 0) {
@@ -725,8 +740,8 @@ function updateAnim(t){
        row.style.opacity = '1';
     }
 
-    row.style.transition='order 0s, filter 2s ease, opacity 2s ease'; 
-    row.style.order=order.indexOf(i);
+    const rank = order.indexOf(i);
+    row.style.transform = `translateY(${rank * ROW_HEIGHT}px)`;
   });
 
   const visibleEvents = chatEvents.filter(e => e.start <= t);
@@ -796,7 +811,7 @@ function updateAnim(t){
 function loop(ts){
   if(!playing)return;
   
-  if(ytPlayer && ytPlayer.getPlayerState && ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) {
+  if(ytPlayer && typeof ytPlayer.getPlayerState === 'function' && ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) {
     curTime = ytPlayer.getCurrentTime();
   } else {
     if(lastTS===null)lastTS=ts;
@@ -805,6 +820,7 @@ function loop(ts){
   }
   
   const dur=+document.getElementById('song-dur').value||200;
+  if(isNaN(curTime)) curTime = 0;
   curTime=Math.min(curTime,dur);
   updateAnim(curTime);
   
@@ -812,7 +828,7 @@ function loop(ts){
     playing=false; 
     document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-play"></i> Play');
     lastTS=null;
-    if(ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo();
+    if(ytPlayer && typeof ytPlayer.pauseVideo === 'function') ytPlayer.pauseVideo();
     return;
   }
   animId=requestAnimationFrame(loop);
@@ -826,14 +842,14 @@ function togglePlay(){
   if(playing){
     document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-pause"></i> Pausa');
     lastTS=null;
-    if(ytPlayer && ytPlayer.playVideo) {
+    if(ytPlayer && typeof ytPlayer.playVideo === 'function') {
        ytPlayer.seekTo(curTime, true);
        ytPlayer.playVideo();
     }
     animId=requestAnimationFrame(loop);
   } else {
     document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-play"></i> Play');
-    if(ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo();
+    if(ytPlayer && typeof ytPlayer.pauseVideo === 'function') ytPlayer.pauseVideo();
     if(animId)cancelAnimationFrame(animId);
   }
 }
@@ -841,13 +857,13 @@ function togglePlay(){
 function resetAnim(){
   playing=false;if(animId)cancelAnimationFrame(animId); curTime=0;lastTS=null; prevEventKey='';
   document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-play"></i> Play');
-  if(ytPlayer && ytPlayer.pauseVideo) { ytPlayer.pauseVideo(); ytPlayer.seekTo(0, true); }
+  if(ytPlayer && typeof ytPlayer.pauseVideo === 'function') { ytPlayer.pauseVideo(); ytPlayer.seekTo(0, true); }
   initDisplayState();buildBars();updateAnim(0);
 }
 
 function scrub(v){
   curTime=v; 
-  if(ytPlayer && ytPlayer.seekTo) {
+  if(ytPlayer && typeof ytPlayer.seekTo === 'function') {
     ytPlayer.seekTo(v, true);
   }
   updateAnim(v);
@@ -855,7 +871,7 @@ function scrub(v){
 
 async function recordScreen() {
   try {
-    alert("NOTA IMPORTANTE:\n\n1. En la ventana que va a aparecer, elige la opción 'Pestaña de Chrome' (NO 'Ventana' ni 'Toda la pantalla') para grabar solo el editor.\n2. Asegúrate de activar 'Compartir audio de la pestaña'.");
+    alert("NOTA IMPORTANTE:\n\n1. En la ventana emergente, elige la opción 'Pestaña de Chrome' (NO 'Ventana' ni 'Toda la pantalla').\n2. Asegúrate de activar 'Compartir audio de la pestaña'.");
     
     const displayStream = await navigator.mediaDevices.getDisplayMedia({ 
       video: { 
@@ -1072,7 +1088,7 @@ function importData(e) {
       curTime = 0;
       prevEventKey = '';
       activeCapIdx = 0;
-      if(ytPlayer && ytPlayer.seekTo) { ytPlayer.seekTo(0); ytPlayer.pauseVideo(); }
+      if(ytPlayer && typeof ytPlayer.seekTo === 'function') { ytPlayer.seekTo(0); ytPlayer.pauseVideo(); }
       if(animId) cancelAnimationFrame(animId);
       playing = false;
       document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-play"></i> Play');
