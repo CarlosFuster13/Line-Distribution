@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Line Distribution Editor</title>
+<title>Line Distribution Editor - Ultimate Edition</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
 <style>
 :root {
@@ -188,6 +188,7 @@ textarea{resize:vertical;padding:8px;}
       <div id="yt-container">
         <div id="yt-player"></div>
       </div>
+      
       <div id="chat-wrap">
         <div class="custom-bg"></div>
         <div class="custom-overlay"></div>
@@ -808,15 +809,21 @@ function updateAnim(t){
   }
 }
 
+// Reloj interno totalmente desacoplado de la API de Youtube para evitar tirones
 function loop(ts){
   if(!playing)return;
-  
-  if(ytPlayer && typeof ytPlayer.getPlayerState === 'function' && ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) {
-    curTime = ytPlayer.getCurrentTime();
-  } else {
-    if(lastTS===null)lastTS=ts;
-    const dt=(ts-lastTS)/1000*playSpeed;lastTS=ts;
-    curTime += dt;
+
+  if(!lastTS) lastTS = ts;
+  const dt = (ts - lastTS) / 1000 * playSpeed;
+  lastTS = ts;
+
+  curTime += dt;
+
+  if (ytPlayer && typeof ytPlayer.getPlayerState === 'function' && ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) {
+      let ytTime = ytPlayer.getCurrentTime();
+      if (Math.abs(curTime - ytTime) > 0.3) {
+          curTime = ytTime;
+      }
   }
   
   const dur=+document.getElementById('song-dur').value||200;
