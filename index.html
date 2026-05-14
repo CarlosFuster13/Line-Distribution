@@ -57,8 +57,15 @@ textarea{resize:vertical;padding:8px;}
 .swatch.on{border-color:var(--color-text-primary);}
 .hint{font-size:12px;color:var(--color-text-secondary);margin-top:5px;}
 
-/* Split Layout */
-#split-layout { display: flex; gap: 16px; height: 65vh; min-height: 500px; margin-bottom: 1rem; align-items: stretch; }
+/* Split Layout Avanzado y ajustado a la altura de la pantalla */
+#split-layout { 
+  display: flex; 
+  gap: 16px; 
+  height: calc(100vh - 200px); 
+  min-height: 500px; 
+  margin-bottom: 1rem; 
+  align-items: stretch; 
+}
 #left-panel { flex: 1; min-width: 320px; display: flex; flex-direction: column; gap: 16px; }
 #yt-container { flex: 1 1 50%; min-height: 200px; border-radius: 12px; overflow: hidden; background: #000; border: 1px solid var(--color-border-tertiary); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
 #chat-wrap { flex: 1 1 50%; position:relative; border-radius:12px; overflow:hidden; border:1px solid var(--color-border-tertiary); display: flex; flex-direction: column;}
@@ -66,14 +73,16 @@ textarea{resize:vertical;padding:8px;}
 
 .custom-bg { position:absolute; top:0; left:0; right:0; bottom:0; background-size:cover; background-position:center; z-index:0; }
 .custom-overlay { position:absolute; top:0; left:0; right:0; bottom:0; background:var(--color-background-secondary); z-index:1; transition:background 0.3s; }
-.content-z { position:relative; z-index:2; height:100%; display:flex; flex-direction:column; }
+.content-z { position:relative; z-index:2; height:100%; display:flex; flex-direction:column; overflow:hidden; }
 
+/* Barras con transición suave al gris */
 .hbar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px; transition: filter 2s ease, opacity 2s ease;}
 .hbar-name{font-size:13px;font-weight:600;min-width:100px;text-align:right;flex-shrink:0; text-shadow: 0px 1px 3px rgba(0,0,0,0.3);}
 .hbar-track{flex:1;background:var(--color-background-primary);border-radius:6px;height:24px;overflow:hidden;border:0.5px solid var(--color-border-tertiary); box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);}
 .hbar-fill{height:100%;border-radius:4px;width:0%;}
 .hbar-secs{font-size:12px;min-width:38px;text-align:right;flex-shrink:0;color:var(--color-text-primary); font-weight:500;}
 
+/* CHAT Y ANIMACIONES */
 #chat-history { flex: 1; padding: 1.25rem; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; scroll-behavior: smooth; }
 #typing-indicator-wrap { padding: 0.75rem 1.25rem; border-top: 1px solid rgba(128,128,128,0.2); min-height: 48px; }
 
@@ -93,6 +102,7 @@ textarea{resize:vertical;padding:8px;}
 #time-label{font-size:13px;color:var(--color-text-secondary);min-width:80px;text-align:right; font-family:monospace;}
 .ctrl-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
 
+/* Barras de scroll limpias */
 #chat-history::-webkit-scrollbar { width: 6px; }
 #chat-history::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 4px; }
 #bars-container::-webkit-scrollbar { width: 6px; }
@@ -129,7 +139,7 @@ textarea{resize:vertical;padding:8px;}
     <div style="flex:1; min-width:250px;">
       <label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:3px;">Enlace de YouTube</label>
       <div style="display:flex; gap:8px; align-items:center;">
-        <input type="text" id="yt-url" placeholder="https://www.youtube.com/watch?v=... o URL de Shorts" style="flex:1;" />
+        <input type="text" id="yt-url" placeholder="https://www.youtube.com/watch?v=..." style="flex:1;" />
         <button class="btn btn-p" onclick="loadYouTubeVideo()"><i class="ti ti-brand-youtube"></i> Cargar Video</button>
       </div>
     </div>
@@ -146,7 +156,7 @@ textarea{resize:vertical;padding:8px;}
     <button class="btn btn-d" onclick="removeAllS()" style="padding:4px 8px; font-size:11px;"><i class="ti ti-trash"></i> Vaciar todo</button>
   </div>
   
-  <p class="hint" style="margin-bottom:10px;">Selecciona el círculo para activar los atajos. ESPACIO: Play/Pausa | Tecla I: Captura Inicio | Tecla O: Captura Fin y avanza.</p>
+  <p class="hint" style="margin-bottom:10px;">Selecciona el círculo del segmento para activar los atajos. ESPACIO: Play/Pausa | Tecla I: Captura Inicio | Tecla O: Captura Fin y avanza.</p>
 
   <div class="seg-grid" style="padding:0 6px;margin-bottom:3px;border:none;">
     <span></span><span></span><span class="seg-hdr">Inicio (s)</span><span class="seg-hdr">Fin (s)</span>
@@ -164,6 +174,7 @@ textarea{resize:vertical;padding:8px;}
       <input type="file" accept="image/*" style="display:none;" onchange="setBgImage(event)">
     </label>
     <button class="btn btn-d" onclick="recordScreen()"><i class="ti ti-video"></i> Exportar / Grabar Pestaña</button>
+    <span id="ticker-time" style="font-size:12px;color:var(--color-text-secondary);font-family:monospace;background:var(--color-background-secondary);padding:6px 10px;border-radius:6px; margin-left:auto;">0.00s</span>
   </div>
 
   <div id="split-layout">
@@ -171,7 +182,6 @@ textarea{resize:vertical;padding:8px;}
       <div id="yt-container">
         <div id="yt-player"></div>
       </div>
-      
       <div id="chat-wrap">
         <div class="custom-bg"></div>
         <div class="custom-overlay"></div>
@@ -233,7 +243,6 @@ textarea{resize:vertical;padding:8px;}
 if(window.matchMedia('(prefers-color-scheme: dark)').matches) document.body.classList.add('dark-theme');
 function toggleTheme() { document.body.classList.toggle('dark-theme'); renderStats(); }
 
-// 30 Colores disponibles
 const PAL=[
   '#7F77DD','#1D9E75','#D85A30','#D4537E','#378ADD','#639922','#BA7517','#E24B4A','#888780','#985fd4',
   '#F4A261','#2A9D8F','#E76F51','#F4C430','#00B8D9','#D138BF','#88C100','#1F3A93','#FF7F50','#B57EDC',
@@ -410,7 +419,7 @@ function renderM(){
     const cols=PAL.map((c,ci)=>`<div class="swatch${m.color===c?' on':''}" style="background:${c}" onclick="setCol(${i},${ci})"></div>`).join('');
     
     d.innerHTML=`
-      <div style="position:relative; width:28px; height:28px; border-radius:50%; overflow:hidden; border:2px solid ${m.color}; flex-shrink:0;">
+      <div style="position:relative; width:28px; height:28px; border-radius:50%; overflow:hidden; border:2px solid ${m.color}; flex-shrink:0;" title="Click para subir foto">
          <img src="${m.avatar || ''}" style="width:100%; height:100%; object-fit:cover; display:${m.avatar ? 'block' : 'none'};">
          <div style="width:100%; height:100%; background:${m.color}; display:${m.avatar ? 'none' : 'block'};"></div>
          <input type="file" accept="image/*" style="position:absolute; top:0; left:0; opacity:0; width:100%; height:100%; cursor:pointer;" onchange="handleAvatarUpload(event, ${i})">
@@ -447,11 +456,11 @@ function renderS(){
       <div style="display:flex;justify-content:center;"><input type="radio" name="capRadio" ${activeCapIdx===i?'checked':''} onchange="activeCapIdx=${i};renderS()"></div>
       <div style="display:flex; gap:2px; align-items:center;">
         <input type="number" value="${s.start}" min="0" step="0.01" style="width:100%;" onchange="segments[${i}].start=+this.value;buildChatEvents();" />
-        <button class="btn" onclick="captureT(${i}, 'start')" style="padding:4px 6px;"><i class="ti ti-clock"></i></button>
+        <button class="btn" onclick="captureT(${i}, 'start')" style="padding:4px 6px;" title="Capturar Tiempo"><i class="ti ti-clock"></i></button>
       </div>
       <div style="display:flex; gap:2px; align-items:center;">
         <input type="number" value="${s.end}" min="0" step="0.01" style="width:100%;" onchange="segments[${i}].end=+this.value;buildChatEvents();" />
-        <button class="btn" onclick="captureT(${i}, 'end')" style="padding:4px 6px;"><i class="ti ti-clock"></i></button>
+        <button class="btn" onclick="captureT(${i}, 'end')" style="padding:4px 6px;" title="Capturar Tiempo"><i class="ti ti-clock"></i></button>
       </div>
       <div style="display:flex; flex-direction:column; gap:4px;">
         <input type="text" placeholder="Letra Principal" value="${s.lyric}" onchange="segments[${i}].lyric=this.value;buildChatEvents();" />
@@ -459,8 +468,8 @@ function renderS(){
       </div>
       <select onchange="segments[${i}].memberId=+this.value;this.style.borderLeft='3px solid '+(members[+this.value]||members[0]).color;buildChatEvents();" style="border-left:3px solid ${m.color};width:100%;height:100%;">${mopts(s.memberId)}</select>
       <div style="display:flex; gap:4px;">
-        <button class="btn" onclick="insertS(${i})" style="padding:4px 7px;"><i class="ti ti-plus"></i></button>
-        <button class="btn btn-d" onclick="rmS(${i})" style="padding:4px 7px;"><i class="ti ti-x"></i></button>
+        <button class="btn" onclick="insertS(${i})" style="padding:4px 7px;" title="Añadir línea debajo"><i class="ti ti-plus"></i></button>
+        <button class="btn btn-d" onclick="rmS(${i})" style="padding:4px 7px;" title="Eliminar línea"><i class="ti ti-x"></i></button>
       </div>`;
     el.appendChild(d);
   });
@@ -661,8 +670,13 @@ function updateActiveKaraoke(visibleEvents, t) {
 function updateAnim(t){
   const dur=+document.getElementById('song-dur').value||200;
   document.getElementById('time-label').textContent=fmt(t)+' / '+fmt(dur);
+  const tk = document.getElementById('ticker-time');
+  if(tk) tk.textContent = t.toFixed(2) + 's';
   document.getElementById('scrubber').max = dur;
   document.getElementById('scrubber').value = t;
+
+  const segTimeDisp = document.getElementById('seg-time-display');
+  if(segTimeDisp) segTimeDisp.textContent = t.toFixed(2) + 's';
 
   const totals=computeTotals(t);
   
@@ -840,7 +854,7 @@ function scrub(v){
 
 async function recordScreen() {
   try {
-    alert("NOTA IMPORTANTE:\n\nPara que la grabación tenga sonido, es IMPRESCINDIBLE que en la siguiente pantalla actives la casilla 'Compartir audio de la pestaña'.");
+    alert("NOTA IMPORTANTE:\n\n1. En la ventana que va a aparecer, elige la opción 'Pestaña de Chrome' (NO 'Ventana' ni 'Toda la pantalla') para grabar solo el editor.\n2. Asegúrate de activar 'Compartir audio de la pestaña'.");
     
     const displayStream = await navigator.mediaDevices.getDisplayMedia({ 
       video: { 
@@ -849,7 +863,13 @@ async function recordScreen() {
         height: { ideal: 1080 },
         frameRate: { ideal: 60 }
       }, 
-      audio: true 
+      audio: {
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false,
+        sampleRate: 48000
+      },
+      preferCurrentTab: true 
     });
     
     if (displayStream.getAudioTracks().length === 0) {
@@ -872,7 +892,11 @@ async function recordScreen() {
 
     const combinedStream = new MediaStream(tracks);
     
-    const options = { videoBitsPerSecond: 8000000 };
+    const options = { 
+        videoBitsPerSecond: 8000000,
+        audioBitsPerSecond: 192000
+    };
+    
     if (MediaRecorder.isTypeSupported('video/webm; codecs=vp9')) {
       options.mimeType = 'video/webm; codecs=vp9';
     }
