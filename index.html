@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Line Distribution Editor - YouTube & Chat Edition</title>
+<title>Line Distribution Editor - Chat & YouTube Edition</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
 <style>
 :root {
@@ -242,7 +242,7 @@ let members=[
   {name:'ALL',color:PAL[8], avatar:''}, 
 ];
 let segments=[
-  {start:0,end:5.50,lyric:'Jin empieza la linea en el chat', translation:'Traduccion', memberId:0},
+  {start:0,end:5.50,lyric:'Jin empieza la cancion', translation:'Traduccion', memberId:0},
   {start:8.00,end:12.00,lyric:'Suga se une despues', translation:'Suga continua', memberId:1}, 
 ];
 
@@ -373,6 +373,118 @@ function sw(name){
 
 function fmt(s){ const m=Math.floor(s/60), sc=Math.floor(s%60); return m+':'+(sc<10?'0':'')+sc; }
 
+// --- MOTOR DE CHAT E HISTORIAL ---
+function buildChatEvents() {
+  chatEvents = [];
+  let maxEnds = members.map(()=>0);
+  
+  segments.forEach(s => {
+      const m = members[s.memberId];
+      if(m && m.name === 'ALL'){
+      } else if (m && m.name.includes('+')) {
+        const subNames = m.name.split('+').map(n => n.trim().toLowerCase());
+        members.forEach((other, idx) => { if (subNames.includes(other.name.toLowerCase())) maxEnds[idx] = Math.max(maxEnds[idx], s.end); });
+      } else {
+        if (s.memberId < maxEnds.length) maxEnds[s.memberId] = Math.max(maxEnds[s.memberId], s.end);
+      }
+  });
+
+  segments.forEach((s, idx) => {
+      chatEvents.push({ type: 'lyric', start: s.start, end: s.end, act: s, idx: idx });
+  });
+
+  let leavesMap = {};
+  members.forEach((m, i) => {
+      if(m.name !== 'ALL' && !m.name.includes('+') && maxEnds[i] > 0) {
+          if(!leavesMap[maxEnds[i]]) leavesMap[maxEnds[i]] = [];
+          leavesMap[maxEnds[i]].push(i);
+      }
+  });
+
+  Object.keys(leavesMap).forEach(time => {
+      chatEvents.push({ type: 'leave', start: parseFloat(time), members: leavesMap[time] });
+  });
+
+  chatEvents.sort((a,b) => a.start - b.start);
+  prevEventKey = ''; 
+}
+
+function renderChatHistory(visibleEvents, t) {
+  const area = document.getElementById('chat-history');
+  if(!area) return;
+  if(visibleEvents.length === 0) {
+      area.innerHTML = '<div style="text-align:center; color:var(--color-text-secondary); font-size:13px; margin-top:2rem;">El chat está vacío...</div>';
+      return;
+  }
+
+  let html = '';
+  visibleEvents.forEach(ev => {
+      if(ev.type === 'lyric') {
+          const act = ev.act;
+          const m = members[act.memberId] || members[0];
+          const progress = Math.max(0, Math.min(1, (t - act.start) / (act.end - act.start)));
+          const pct = progress * 100;
+          
+          let bgStyle = '';
+          if (pct >= 100) {
+              bgStyle = `color: ${m.color};`; 
+          } else {
+              const gradient = `linear-gradient(to right, ${m.color} ${Math.max(0, pct - 8)}%, var(--color-text-secondary) ${Math.min(100, pct + 2)}%)`;
+              bgStyle = `background: ${gradient}; -webkit-background-clip: text; -webkit-text-fill-color: transparent; color: transparent;`;
+          }
+
+          let avHTML = m.avatar 
+             ? `<img src="${m.avatar}" style="width:20px;height:20px;border-radius:50%;object-fit:cover; border:1.5px solid ${m.color}">` 
+             : `<div style="width:14px;height:14px;border-radius:50%;background:${m.color};"></div>`;
+
+          let transHtml = act.translation ? `<div style="font-size:13px; color:var(--color-text-secondary); margin-top:2px; font-weight:400;">${act.translation}</div>` : '';
+
+          html += `
+            <div style="margin-bottom: 12px; animation: fadeIn 0.3s ease;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                ${avHTML}
+                <span style="font-size:13px;font-weight:600;color:${m.color};text-transform:uppercase;">${m.name}</span>
+              </div>
+              <div id="lyric-text-${ev.idx}" style="font-size:18px;min-height:24px;letter-spacing:.01em;font-weight:700; display:inline-block; ${bgStyle}">
+                ${act.lyric}
+              </div>
+              ${transHtml}
+            </div>
+          `;
+      } else if (ev.type === 'leave') {
+          let names = ev.members.filter(id => members[id]).map(id => `<span style="color:${members[id].color};font-weight:600;">${members[id].name}</span>`).join(' y ');
+          let verb = ev.members.length > 1 ? 'han salido' : 'ha salido';
+          html += `<div style="text-align:center; font-size:13px; color:var(--color-text-secondary); margin: 16px 0; font-style:italic; animation: fadeIn 0.3s ease;">${names} ${verb} del chat</div>`;
+      }
+  });
+  area.innerHTML = html;
+}
+
+function updateActiveKaraoke(visibleEvents, t) {
+  visibleEvents.forEach(ev => {
+      if(ev.type === 'lyric') {
+          const el = document.getElementById(`lyric-text-${ev.idx}`);
+          if(el) {
+              if(t >= ev.end) {
+                  const m = members[ev.act.memberId] || members[0];
+                  el.style.background = 'none';
+                  el.style.webkitBackgroundClip = 'initial';
+                  el.style.webkitTextFillColor = 'initial';
+                  el.style.color = m.color;
+              } else if (t >= ev.start && t < ev.end) {
+                  const m = members[ev.act.memberId] || members[0];
+                  const progress = Math.max(0, Math.min(1, (t - ev.start) / (ev.end - ev.start)));
+                  const pct = progress * 100;
+                  el.style.background = `linear-gradient(to right, ${m.color} ${Math.max(0, pct - 8)}%, var(--color-text-secondary) ${Math.min(100, pct + 2)}%)`;
+                  el.style.webkitBackgroundClip = 'text';
+                  el.style.webkitTextFillColor = 'transparent';
+                  el.style.color = 'transparent';
+              }
+          }
+      }
+  });
+}
+
 function renderM(){
   const el=document.getElementById('mlist');el.innerHTML='';
   members.forEach((m,i)=>{
@@ -393,7 +505,6 @@ function renderM(){
   });
   buildChatEvents();
 }
-
 function setCol(i,ci){members[i].color=PAL[ci];renderM();initDisplayState();buildBars();}
 function addM(){const inp=document.getElementById('nm-inp');const n=inp.value.trim()||'Miembro '+(members.length+1);members.push({name:n,color:PAL[members.length%PAL.length],avatar:''});inp.value='';renderM();renderS();initDisplayState();}
 function removeM(i){members.splice(i,1);segments.forEach(s=>{if(s.memberId>=members.length)s.memberId=0;});renderM();renderS();initDisplayState();}
@@ -413,11 +524,11 @@ function renderS(){
       <div class="drag-handle"><i class="ti ti-grip-vertical"></i></div>
       <div style="display:flex;justify-content:center;"><input type="radio" name="capRadio" ${activeCapIdx===i?'checked':''} onchange="activeCapIdx=${i};renderS()"></div>
       <div style="display:flex; gap:2px; align-items:center;">
-        <input type="number" value="${s.start}" min="0" step="0.01" style="width:100%;" onchange="segments[${i}].start=+this.value;" />
+        <input type="number" value="${s.start}" min="0" step="0.01" style="width:100%;" onchange="segments[${i}].start=+this.value;buildChatEvents();" />
         <button class="btn" onclick="captureT(${i}, 'start')" style="padding:4px 6px;"><i class="ti ti-clock"></i></button>
       </div>
       <div style="display:flex; gap:2px; align-items:center;">
-        <input type="number" value="${s.end}" min="0" step="0.01" style="width:100%;" onchange="segments[${i}].end=+this.value;" />
+        <input type="number" value="${s.end}" min="0" step="0.01" style="width:100%;" onchange="segments[${i}].end=+this.value;buildChatEvents();" />
         <button class="btn" onclick="captureT(${i}, 'end')" style="padding:4px 6px;"><i class="ti ti-clock"></i></button>
       </div>
       <div style="display:flex; flex-direction:column; gap:4px;">
@@ -490,120 +601,6 @@ function buildBars(){
       <div class="hbar-track"><div class="hbar-fill" id="hfill-${i}" style="background:${m.color};transition:width .55s cubic-bezier(.4,0,.2,1);"></div></div>
       <div class="hbar-secs" id="hsecs-${i}">0.0s</div>`;
     c.appendChild(row);
-  });
-}
-
-function lerp(a,b,t){return a+(b-a)*t;}
-
-// --- GESTION DE EVENTOS DE CHAT ---
-function buildChatEvents() {
-  chatEvents = [];
-  let maxEnds = members.map(()=>0);
-  
-  segments.forEach(s => {
-      const m = members[s.memberId];
-      if(m && m.name === 'ALL'){
-      } else if (m && m.name.includes('+')) {
-        const subNames = m.name.split('+').map(n => n.trim().toLowerCase());
-        members.forEach((other, idx) => { if (subNames.includes(other.name.toLowerCase())) maxEnds[idx] = Math.max(maxEnds[idx], s.end); });
-      } else {
-        if (s.memberId < maxEnds.length) maxEnds[s.memberId] = Math.max(maxEnds[s.memberId], s.end);
-      }
-  });
-
-  segments.forEach((s, idx) => {
-      chatEvents.push({ type: 'lyric', start: s.start, end: s.end, act: s, idx: idx });
-  });
-
-  let leavesMap = {};
-  members.forEach((m, i) => {
-      if(m.name !== 'ALL' && !m.name.includes('+') && maxEnds[i] > 0) {
-          if(!leavesMap[maxEnds[i]]) leavesMap[maxEnds[i]] = [];
-          leavesMap[maxEnds[i]].push(i);
-      }
-  });
-
-  Object.keys(leavesMap).forEach(time => {
-      chatEvents.push({ type: 'leave', start: parseFloat(time), members: leavesMap[time] });
-  });
-
-  chatEvents.sort((a,b) => a.start - b.start);
-  prevEventKey = ''; 
-}
-
-function renderChatHistory(visibleEvents, t) {
-  const area = document.getElementById('chat-history');
-  if(!area) return;
-  if(visibleEvents.length === 0) {
-      area.innerHTML = '<div style="text-align:center; color:var(--color-text-secondary); font-size:13px; margin-top:2rem;">El chat esta vacio...</div>';
-      return;
-  }
-
-  let html = '';
-  visibleEvents.forEach(ev => {
-      if(ev.type === 'lyric') {
-          const act = ev.act;
-          const m = members[act.memberId] || members[0];
-          const progress = Math.max(0, Math.min(1, (t - act.start) / (act.end - act.start)));
-          const pct = progress * 100;
-          
-          let bgStyle = '';
-          if (pct >= 100) {
-              bgStyle = `color: ${m.color};`; 
-          } else {
-              const gradient = `linear-gradient(to right, ${m.color} ${Math.max(0, pct - 8)}%, var(--color-text-secondary) ${Math.min(100, pct + 2)}%)`;
-              bgStyle = `background: ${gradient}; -webkit-background-clip: text; -webkit-text-fill-color: transparent; color: transparent;`;
-          }
-
-          let avHTML = m.avatar 
-             ? `<img src="${m.avatar}" style="width:20px;height:20px;border-radius:50%;object-fit:cover; border:1.5px solid ${m.color}">` 
-             : `<div style="width:14px;height:14px;border-radius:50%;background:${m.color};"></div>`;
-
-          let transHtml = act.translation ? `<div style="font-size:13px; color:var(--color-text-secondary); margin-top:2px; font-weight:400;">${act.translation}</div>` : '';
-
-          html += `
-            <div style="margin-bottom: 12px; animation: fadeIn 0.3s ease;">
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-                ${avHTML}
-                <span style="font-size:13px;font-weight:600;color:${m.color};text-transform:uppercase;">${m.name}</span>
-              </div>
-              <div id="lyric-text-${ev.idx}" style="font-size:18px;min-height:24px;letter-spacing:.01em;font-weight:700; display:inline-block; ${bgStyle}">
-                ${act.lyric}
-              </div>
-              ${transHtml}
-            </div>
-          `;
-      } else if (ev.type === 'leave') {
-          let names = ev.members.filter(id => members[id]).map(id => `<span style="color:${members[id].color};font-weight:600;">${members[id].name}</span>`).join(' y ');
-          let verb = ev.members.length > 1 ? 'han salido' : 'ha salido';
-          html += `<div style="text-align:center; font-size:13px; color:var(--color-text-secondary); margin: 16px 0; font-style:italic; animation: fadeIn 0.3s ease;">${names} ${verb} del chat</div>`;
-      }
-  });
-  area.innerHTML = html;
-}
-
-function updateActiveKaraoke(visibleEvents, t) {
-  visibleEvents.forEach(ev => {
-      if(ev.type === 'lyric') {
-          const el = document.getElementById(`lyric-text-${ev.idx}`);
-          if(el) {
-              if(t >= ev.end) {
-                  const m = members[ev.act.memberId] || members[0];
-                  el.style.background = 'none';
-                  el.style.webkitBackgroundClip = 'initial';
-                  el.style.webkitTextFillColor = 'initial';
-                  el.style.color = m.color;
-              } else if (t >= ev.start && t < ev.end) {
-                  const m = members[ev.act.memberId] || members[0];
-                  const progress = Math.max(0, Math.min(1, (t - ev.start) / (ev.end - ev.start)));
-                  const pct = progress * 100;
-                  el.style.background = `linear-gradient(to right, ${m.color} ${Math.max(0, pct - 8)}%, var(--color-text-secondary) ${Math.min(100, pct + 2)}%)`;
-                  el.style.webkitBackgroundClip = 'text';
-                  el.style.webkitTextFillColor = 'transparent';
-                  el.style.color = 'transparent';
-              }
-          }
-      }
   });
 }
 
@@ -706,7 +703,7 @@ function updateAnim(t){
         return `<span style="color:${m.color}; font-weight:600;">${displayName}</span>`;
       }).join(', ');
       
-      const verb = numPeople > 1 ? 'estan' : 'esta';
+      const verb = numPeople > 1 ? 'están' : 'está';
       typingHTML = `<span class="typing-anim">${namesHTML} ${verb} escribiendo...</span>`;
     }
   }
@@ -785,7 +782,7 @@ function scrub(v){
 // --- GRABACION DE PANTALLA ---
 async function recordScreen() {
   try {
-    alert("NOTA IMPORTANTE:\n\nPara que la grabacion tenga sonido, es IMPRESCINDIBLE que en la siguiente pantalla actives la casilla 'Compartir audio de la pestaña'.\n\nSi no la activas, el video se guardara mudo.");
+    alert("NOTA IMPORTANTE:\n\nPara que la grabación tenga sonido, es IMPRESCINDIBLE que en la siguiente pantalla actives la casilla 'Compartir audio de la pestaña'.\n\nSi no la activas, el vídeo se guardará mudo.");
     const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: { displaySurface: "browser" }, audio: true });
     
     if (displayStream.getAudioTracks().length === 0) {
