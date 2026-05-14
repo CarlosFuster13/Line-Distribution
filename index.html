@@ -42,7 +42,6 @@ textarea{resize:vertical;padding:8px;}
 .btn-d{color:#E24B4A;border-color:#E24B4A33;}
 .btn-d:hover{background:#FCEBEB;}
 
-/* Grid ajustado */
 .seg-grid {
   display: grid;
   grid-template-columns: 20px 20px 90px 90px 1fr 110px 64px;
@@ -57,7 +56,7 @@ textarea{resize:vertical;padding:8px;}
 .swatch.on{border-color:var(--color-text-primary);}
 .hint{font-size:12px;color:var(--color-text-secondary);margin-top:5px;}
 
-/* Split Layout Avanzado */
+/* Split Layout */
 #split-layout { display: flex; gap: 16px; height: 65vh; min-height: 500px; margin-bottom: 1rem; align-items: stretch; }
 #left-panel { flex: 1; min-width: 320px; display: flex; flex-direction: column; gap: 16px; }
 #yt-container { flex: 1 1 50%; min-height: 200px; border-radius: 12px; overflow: hidden; background: #000; border: 1px solid var(--color-border-tertiary); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
@@ -74,10 +73,9 @@ textarea{resize:vertical;padding:8px;}
 .hbar-fill{height:100%;border-radius:4px;width:0%;}
 .hbar-secs{font-size:12px;min-width:38px;text-align:right;flex-shrink:0;color:var(--color-text-primary); font-weight:500;}
 
-#chat-history { flex: 1; padding: 1.25rem; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+#chat-history { flex: 1; padding: 1.25rem; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; scroll-behavior: smooth; }
 #typing-indicator-wrap { padding: 0.75rem 1.25rem; border-top: 1px solid rgba(128,128,128,0.2); min-height: 48px; }
 
-/* Animación de chat y latido */
 @keyframes typingPulse {
   0% { opacity: 0.7; }
   50% { opacity: 1; }
@@ -85,7 +83,7 @@ textarea{resize:vertical;padding:8px;}
 }
 .typing-anim { animation: typingPulse 1.5s infinite ease-in-out; }
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(5px); }
+  from { opacity: 0; transform: translateY(15px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -94,7 +92,6 @@ textarea{resize:vertical;padding:8px;}
 #time-label{font-size:13px;color:var(--color-text-secondary);min-width:80px;text-align:right; font-family:monospace;}
 .ctrl-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
 
-/* Barras de scroll limpias */
 #chat-history::-webkit-scrollbar { width: 6px; }
 #chat-history::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 4px; }
 #bars-container::-webkit-scrollbar { width: 6px; }
@@ -107,13 +104,13 @@ textarea{resize:vertical;padding:8px;}
 <div class="tabs">
   <button class="tab active" onclick="sw('members')">1. Miembros</button>
   <button class="tab" onclick="sw('segments')">2. Segmentos</button>
-  <button class="tab" onclick="sw('animate')">3. Animación Video</button>
+  <button class="tab" onclick="sw('animate')">3. Animacion Video</button>
   <button class="tab" onclick="sw('stats')">4. Stats</button>
 </div>
 
 <div id="tab-members" class="panel active">
   <div class="stitle">Miembros del grupo</div>
-  <p class="hint" style="margin-bottom:10px;">Añade "ALL" para coros. Miembros unidos por "+" (ej: "Jin + Suga"). Haz clic en el círculo de color para subir foto.</p>
+  <p class="hint" style="margin-bottom:10px;">Añade "ALL" para coros. Miembros unidos por "+" (ej: "Jin + Suga"). Haz clic en el circulo de color para subir foto.</p>
   <div id="mlist"></div>
   <div style="display:flex;gap:8px;margin-top:.5rem;">
     <input type="text" id="nm-inp" placeholder="Nombre del miembro" style="flex:1;" />
@@ -122,27 +119,25 @@ textarea{resize:vertical;padding:8px;}
 </div>
 
 <div id="tab-segments" class="panel">
-  <div class="stitle">Canción y Sincronización de YouTube</div>
+  <div class="stitle">Cancion y Sincronizacion de YouTube</div>
   <div class="card" style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;">
-    <div><label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:3px;">Título de la Canción</label>
-    <input type="text" id="song-title" placeholder="Ej: Mi Canción Genial" style="width:190px;" /></div>
-    <div><label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:3px;">Duración (s)</label>
+    <div><label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:3px;">Titulo de la Cancion</label>
+    <input type="text" id="song-title" placeholder="Ej: Mi Cancion Genial" style="width:190px;" /></div>
+    <div><label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:3px;">Duracion (s)</label>
     <input type="number" id="song-dur" value="200" min="10" style="width:80px;" /></div>
-    <div style="flex:1; min-width:320px;">
-      <label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:3px;">Enlace de YouTube y Controles</label>
+    <div style="flex:1; min-width:250px;">
+      <label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:3px;">Enlace de YouTube</label>
       <div style="display:flex; gap:8px; align-items:center;">
-        <input type="text" id="yt-url" placeholder="https://www.youtube.com/watch?v=..." style="flex:1;" />
-        <button class="btn btn-p" onclick="loadYouTubeVideo()"><i class="ti ti-brand-youtube"></i> Cargar</button>
-        <button class="btn play-toggle-btn" onclick="togglePlay()"><i class="ti ti-player-play"></i> Play</button>
-        <span id="seg-time-display" style="font-family:monospace; font-size:13px; color:var(--color-text-secondary); min-width:45px;">0.00s</span>
+        <input type="text" id="yt-url" placeholder="https://www.youtube.com/watch?v=... o URL de Shorts" style="flex:1;" />
+        <button class="btn btn-p" onclick="loadYouTubeVideo()"><i class="ti ti-brand-youtube"></i> Cargar Video</button>
       </div>
     </div>
   </div>
 
-  <div class="stitle" style="margin-top:1rem;">Generador Rápido de Letra</div>
+  <div class="stitle" style="margin-top:1rem;">Generador Rapido de Letra</div>
   <div class="card" style="display:flex;flex-direction:column;gap:8px;">
-    <textarea id="bulk-lyrics" rows="3" placeholder="Pega aquí tu letra. Cada línea creará un segmento nuevo con 5 segundos por defecto." style="width:100%;"></textarea>
-    <button class="btn" onclick="addBulkLyrics()"><i class="ti ti-list-check"></i> Generar líneas</button>
+    <textarea id="bulk-lyrics" rows="3" placeholder="Pega aqui tu letra. Cada linea creara un segmento nuevo con 5 segundos por defecto." style="width:100%;"></textarea>
+    <button class="btn" onclick="addBulkLyrics()" style="align-self:flex-start;"><i class="ti ti-list-check"></i> Generar lineas</button>
   </div>
 
   <div class="stitle" style="margin-top:1rem; display:flex; justify-content:space-between; align-items:center;">
@@ -150,21 +145,21 @@ textarea{resize:vertical;padding:8px;}
     <button class="btn btn-d" onclick="removeAllS()" style="padding:4px 8px; font-size:11px;"><i class="ti ti-trash"></i> Vaciar todo</button>
   </div>
   
-  <p class="hint" style="margin-bottom:10px;">Selecciona el círculo para activar los atajos. ESPACIO: Play/Pausa | Tecla I: Captura Inicio | Tecla O: Captura Fin y avanza.</p>
+  <p class="hint" style="margin-bottom:10px;">Selecciona el circulo para activar los atajos. ESPACIO: Play/Pausa | Tecla I: Captura Inicio | Tecla O: Captura Fin y avanza.</p>
 
   <div class="seg-grid" style="padding:0 6px;margin-bottom:3px;border:none;">
     <span></span><span></span><span class="seg-hdr">Inicio (s)</span><span class="seg-hdr">Fin (s)</span>
-    <span class="seg-hdr">Letra principal y Traducción</span><span class="seg-hdr">Miembro</span><span></span>
+    <span class="seg-hdr">Letra principal y Traduccion</span><span class="seg-hdr">Miembro</span><span></span>
   </div>
   <div id="slist"></div>
-  <button class="btn" onclick="addS()" style="margin-top:.4rem;"><i class="ti ti-plus"></i> Añadir línea al final</button>
+  <button class="btn" onclick="addS()" style="margin-top:.4rem;"><i class="ti ti-plus"></i> Añadir linea al final</button>
 </div>
 
 <div id="tab-animate" class="panel">
   <div style="margin-bottom:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
     <button class="btn" onclick="toggleTheme()"><i class="ti ti-moon"></i> Tema Oscuro/Claro</button>
     <label class="btn" style="cursor:pointer;">
-      <i class="ti ti-photo"></i> Poner Fondo Gráfica
+      <i class="ti ti-photo"></i> Poner Fondo Grafica
       <input type="file" accept="image/*" style="display:none;" onchange="setBgImage(event)">
     </label>
     <button class="btn btn-d" onclick="recordScreen()"><i class="ti ti-video"></i> Exportar / Grabar Pestaña</button>
@@ -175,6 +170,7 @@ textarea{resize:vertical;padding:8px;}
       <div id="yt-container">
         <div id="yt-player"></div>
       </div>
+      
       <div id="anim-wrap">
         <div class="custom-bg"></div>
         <div class="custom-overlay"></div>
@@ -202,7 +198,7 @@ textarea{resize:vertical;padding:8px;}
   </div>
   
   <div class="ctrl-row">
-    <button class="btn btn-p play-toggle-btn" onclick="togglePlay()"><i class="ti ti-player-play"></i> Play</button>
+    <button class="btn btn-p" id="play-btn" onclick="togglePlay()"><i class="ti ti-player-play"></i> Play</button>
     <button class="btn" onclick="resetAnim()"><i class="ti ti-refresh"></i> Reiniciar</button>
     <select id="speed-sel" onchange="changeSpeed(this.value)" style="font-size:13px;">
       <option value="0.5">0.5×</option>
@@ -244,8 +240,8 @@ let members=[
   {name:'ALL',color:PAL[8], avatar:''}, 
 ];
 let segments=[
-  {start:0,end:5.50,lyric:'Jin empieza la canción', translation:'Traducción opcional', memberId:0},
-  {start:8.00,end:12.00,lyric:'Suga se une después', translation:'Suga continúa', memberId:1}, 
+  {start:0,end:5.50,lyric:'Jin starts the song', translation:'Jin empieza la cancion', memberId:0},
+  {start:10.50,end:15.00,lyric:'Suga comes in later', translation:'Suga entra mas tarde', memberId:1}, 
 ];
 
 let playing=false,curTime=0,lastTS=null,animId=null,playSpeed=1;
@@ -267,7 +263,6 @@ function onYouTubeIframeAPIReady() {
 }
 
 function extractVideoID(url){
-  if (!url) return null;
   if (url.length === 11) return url;
   const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|shorts\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
   return (match && match[1]) ? match[1] : null;
@@ -277,13 +272,13 @@ function loadYouTubeVideo() {
   const url = document.getElementById('yt-url').value;
   const vid = extractVideoID(url);
   if(!vid) {
-    alert("Por favor introduce una URL de YouTube válida.");
+    alert("Por favor introduce una URL de YouTube valida.");
     return;
   }
   
   currentVideoId = url;
 
-  if(ytPlayer && ytPlayer.loadVideoById) {
+  if(ytPlayer) {
     ytPlayer.loadVideoById(vid);
   } else {
     ytPlayer = new YT.Player('yt-player', {
@@ -306,11 +301,11 @@ function onPlayerReady(event) {
 function onPlayerStateChange(event) {
   if (event.data == YT.PlayerState.PLAYING && !playing) {
     playing = true;
-    document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-pause"></i> Pausa');
+    document.getElementById('play-btn').innerHTML='<i class="ti ti-player-pause"></i> Pausa';
     animId = requestAnimationFrame(loop);
   } else if ((event.data == YT.PlayerState.PAUSED || event.data == YT.PlayerState.ENDED) && playing) {
     playing = false;
-    document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-play"></i> Play');
+    document.getElementById('play-btn').innerHTML='<i class="ti ti-player-play"></i> Play';
     if(animId) cancelAnimationFrame(animId);
   }
 }
@@ -335,10 +330,10 @@ document.addEventListener('keydown', e => {
 
 function captureT(index, prop) {
   let t = 0;
-  try {
-      t = (ytPlayer && typeof ytPlayer.getPlayerState === 'function') ? ytPlayer.getCurrentTime() : curTime;
-  } catch(e) {
-      t = curTime;
+  if (ytPlayer && ytPlayer.getPlayerState) {
+    t = ytPlayer.getCurrentTime();
+  } else {
+    t = curTime;
   }
   segments[index][prop] = parseFloat(t.toFixed(2)); 
   renderS();
@@ -352,8 +347,8 @@ function changeSpeed(val) {
 // --- UI PRINCIPAL ---
 function applyBg() {
   if(!projectBg) return;
-  document.querySelectorAll('.custom-bg').forEach(el => el.style.backgroundImage = `url(${projectBg})`);
-  document.querySelectorAll('.custom-overlay').forEach(el => el.style.background = 'rgba(0,0,0,0.7)');
+  document.getElementById('anim-bg').style.backgroundImage = `url(${projectBg})`;
+  document.getElementById('anim-overlay').style.background = 'rgba(0,0,0,0.7)';
   document.body.classList.add('dark-theme'); renderStats();
 }
 
@@ -413,16 +408,10 @@ function renderM(){
       <button class="btn btn-d" onclick="removeM(${i})" style="padding:4px 8px;"><i class="ti ti-trash"></i></button>`;
     el.appendChild(d);
   });
-  buildChatEvents();
 }
 function setCol(i,ci){members[i].color=PAL[ci];renderM();initDisplayState();buildBars();}
 function addM(){const inp=document.getElementById('nm-inp');const n=inp.value.trim()||'Miembro '+(members.length+1);members.push({name:n,color:PAL[members.length%PAL.length],avatar:''});inp.value='';renderM();renderS();initDisplayState();}
-function removeM(i){
-  members.splice(i,1);
-  if(members.length === 0) members.push({name:'Cantante', color:'#7F77DD', avatar:''});
-  segments.forEach(s=>{if(s.memberId>=members.length)s.memberId=0;});
-  renderM();renderS();initDisplayState();
-}
+function removeM(i){members.splice(i,1);segments.forEach(s=>{if(s.memberId>=members.length)s.memberId=0;});renderM();renderS();initDisplayState();}
 
 function mopts(sel){return members.map((m,i)=>`<option value="${i}"${i===sel?' selected':''}>${m.name}</option>`).join('');}
 
@@ -439,16 +428,16 @@ function renderS(){
       <div class="drag-handle"><i class="ti ti-grip-vertical"></i></div>
       <div style="display:flex;justify-content:center;"><input type="radio" name="capRadio" ${activeCapIdx===i?'checked':''} onchange="activeCapIdx=${i};renderS()"></div>
       <div style="display:flex; gap:2px; align-items:center;">
-        <input type="number" value="${s.start}" min="0" step="0.01" style="width:100%;" onchange="segments[${i}].start=+this.value;buildChatEvents();" />
+        <input type="number" value="${s.start}" min="0" step="0.01" style="width:100%;" onchange="segments[${i}].start=+this.value;" />
         <button class="btn" onclick="captureT(${i}, 'start')" style="padding:4px 6px;"><i class="ti ti-clock"></i></button>
       </div>
       <div style="display:flex; gap:2px; align-items:center;">
-        <input type="number" value="${s.end}" min="0" step="0.01" style="width:100%;" onchange="segments[${i}].end=+this.value;buildChatEvents();" />
+        <input type="number" value="${s.end}" min="0" step="0.01" style="width:100%;" onchange="segments[${i}].end=+this.value;" />
         <button class="btn" onclick="captureT(${i}, 'end')" style="padding:4px 6px;"><i class="ti ti-clock"></i></button>
       </div>
       <div style="display:flex; flex-direction:column; gap:4px;">
         <input type="text" placeholder="Letra Principal" value="${s.lyric}" onchange="segments[${i}].lyric=this.value;buildChatEvents();" />
-        <input type="text" placeholder="Traducción (Opcional)" value="${s.translation||''}" onchange="segments[${i}].translation=this.value;buildChatEvents();" />
+        <input type="text" placeholder="Traduccion (Opcional)" value="${s.translation||''}" onchange="segments[${i}].translation=this.value;buildChatEvents();" />
       </div>
       <select onchange="segments[${i}].memberId=+this.value;this.style.borderLeft='3px solid '+(members[+this.value]||members[0]).color;buildChatEvents();" style="border-left:3px solid ${m.color};width:100%;height:100%;">${mopts(s.memberId)}</select>
       <div style="display:flex; gap:4px;">
@@ -460,7 +449,7 @@ function renderS(){
   buildChatEvents();
 }
 
-function addS(){const last=segments[segments.length-1];const st=last?last.end:0;segments.push({start:st,end:st+12,lyric:'Nueva línea...',translation:'',memberId:0});renderS();}
+function addS(){const last=segments[segments.length-1];const st=last?last.end:0;segments.push({start:st,end:st+12,lyric:'Nueva linea...',translation:'',memberId:0});renderS();}
 function insertS(index){
   const curr = segments[index]; const st = curr ? curr.end : 0;
   segments.splice(index + 1, 0, { start: st, end: st + 3, lyric: 'Nueva...', translation:'', memberId: curr.memberId });
@@ -490,18 +479,10 @@ function computeTotals(t){
       const eff=Math.min(s.end,t);
       if(eff>s.start){
         const dur = eff - s.start; const m = members[s.memberId];
-        const nameStr = m && m.name ? String(m.name) : '';
-        if(nameStr === 'ALL') { 
-            members.forEach((other, idx) => { 
-                const oName = other && other.name ? String(other.name) : '';
-                if(oName !== 'ALL' && !oName.includes('+')) totals[idx] += dur; 
-            });
-        } else if (nameStr.includes('+')) {
-          const subNames = nameStr.split('+').map(n => n.trim().toLowerCase());
-          members.forEach((other, idx) => { 
-              const oName = other && other.name ? String(other.name).toLowerCase() : '';
-              if (subNames.includes(oName)) totals[idx] += dur; 
-          });
+        if(m.name === 'ALL') { members.forEach((other, idx) => { if(other.name !== 'ALL' && !other.name.includes('+')) totals[idx] += dur; });
+        } else if (m.name.includes('+')) {
+          const subNames = m.name.split('+').map(n => n.trim().toLowerCase());
+          members.forEach((other, idx) => { if (subNames.includes(other.name.toLowerCase())) totals[idx] += dur; });
         } else { totals[s.memberId] += dur; }
       }
     }
@@ -512,8 +493,7 @@ function computeTotals(t){
 function buildBars(){
   const c=document.getElementById('bars-container');c.innerHTML='';
   members.forEach((m,i)=>{
-    const nameStr = m && m.name ? String(m.name) : '';
-    if(nameStr === 'ALL' || nameStr.includes('+')) return; 
+    if(m.name === 'ALL' || m.name.includes('+')) return; 
     let avatarHTML = m.avatar 
        ? `<img src="${m.avatar}" style="width:22px;height:22px;border-radius:50%;object-fit:cover; border:1.5px solid ${m.color}; background:var(--color-background-primary);">` 
        : '';
@@ -530,7 +510,6 @@ function buildBars(){
 
 function lerp(a,b,t){return a+(b-a)*t;}
 
-// --- MOTOR DE CHAT E HISTORIAL ---
 function buildChatEvents() {
   chatEvents = [];
   if(!members || members.length === 0) return;
@@ -538,14 +517,10 @@ function buildChatEvents() {
   
   segments.forEach(s => {
       const m = members[s.memberId];
-      const nameStr = m && m.name ? String(m.name) : '';
-      if(nameStr === 'ALL'){
-      } else if (nameStr.includes('+')) {
-        const subNames = nameStr.split('+').map(n => n.trim().toLowerCase());
-        members.forEach((other, idx) => { 
-            const otherName = other && other.name ? String(other.name).toLowerCase() : '';
-            if (subNames.includes(otherName)) maxEnds[idx] = Math.max(maxEnds[idx]||0, s.end); 
-        });
+      if(m && m.name === 'ALL'){
+      } else if (m && m.name.includes('+')) {
+        const subNames = m.name.split('+').map(n => n.trim().toLowerCase());
+        members.forEach((other, idx) => { if (subNames.includes(other.name.toLowerCase())) maxEnds[idx] = Math.max(maxEnds[idx]||0, s.end); });
       } else {
         if (s.memberId < maxEnds.length) maxEnds[s.memberId] = Math.max(maxEnds[s.memberId]||0, s.end);
       }
@@ -557,8 +532,7 @@ function buildChatEvents() {
 
   let leavesMap = {};
   members.forEach((m, i) => {
-      const nameStr = m && m.name ? String(m.name) : '';
-      if(nameStr !== 'ALL' && !nameStr.includes('+') && maxEnds[i] > 0) {
+      if(m.name !== 'ALL' && !m.name.includes('+') && maxEnds[i] > 0) {
           if(!leavesMap[maxEnds[i]]) leavesMap[maxEnds[i]] = [];
           leavesMap[maxEnds[i]].push(i);
       }
@@ -582,6 +556,9 @@ function renderChatHistory(visibleEvents, t) {
 
   let html = '';
   visibleEvents.forEach(ev => {
+      let isNew = (t - ev.start >= 0 && t - ev.start < 0.6);
+      let animStyle = isNew ? 'animation: fadeIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;' : 'opacity: 1;';
+
       if(ev.type === 'lyric') {
           const act = ev.act;
           const m = members[act.memberId] || members[0] || {name:'-', color:'#000'};
@@ -603,7 +580,7 @@ function renderChatHistory(visibleEvents, t) {
           let transHtml = act.translation ? `<div style="font-size:13px; color:var(--color-text-secondary); margin-top:2px; font-weight:400;">${act.translation}</div>` : '';
 
           html += `
-            <div style="margin-bottom: 12px; animation: fadeIn 0.3s ease;">
+            <div style="margin-bottom: 12px; ${animStyle}">
               <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
                 ${avHTML}
                 <span style="font-size:13px;font-weight:600;color:${m.color};text-transform:uppercase;">${m.name}</span>
@@ -617,7 +594,7 @@ function renderChatHistory(visibleEvents, t) {
       } else if (ev.type === 'leave') {
           let names = ev.members.filter(id => members[id]).map(id => `<span style="color:${members[id].color};font-weight:600;">${members[id].name}</span>`).join(' y ');
           let verb = ev.members.length > 1 ? 'han salido' : 'ha salido';
-          html += `<div style="text-align:center; font-size:13px; color:var(--color-text-secondary); margin: 16px 0; font-style:italic; animation: fadeIn 0.3s ease;">${names} ${verb} del chat</div>`;
+          html += `<div style="text-align:center; font-size:13px; color:var(--color-text-secondary); margin: 16px 0; font-style:italic; ${animStyle}">${names} ${verb} del chat</div>`;
       }
   });
   area.innerHTML = html;
@@ -651,42 +628,30 @@ function updateActiveKaraoke(visibleEvents, t) {
 function updateAnim(t){
   const dur=+document.getElementById('song-dur').value||200;
   document.getElementById('time-label').textContent=fmt(t)+' / '+fmt(dur);
-  document.getElementById('ticker-time').textContent = t.toFixed(2) + 's';
+  const tk = document.getElementById('ticker-time');
+  if(tk) tk.textContent = t.toFixed(2) + 's';
   document.getElementById('scrubber').max = dur;
   document.getElementById('scrubber').value = t;
 
-  const segTimeDisp = document.getElementById('seg-time-display');
-  if(segTimeDisp) segTimeDisp.textContent = t.toFixed(2) + 's';
-
   const totals=computeTotals(t);
-  
-  const validTotals = totals.filter((_, i) => {
-      const n = members[i] && members[i].name ? String(members[i].name) : '';
-      return n !== 'ALL' && !n.includes('+');
-  });
-  const maxTotal = validTotals.length > 0 ? Math.max(...validTotals) : 0;
-  const maxT = Math.max(maxTotal, 1);
+  const validTotals = totals.filter((_, i) => members[i].name !== 'ALL' && !members[i].name.includes('+'));
+  const maxT=Math.max(...validTotals, 1);
   const order=[...members.map((_,i)=>i)].sort((a,b)=>totals[b]-totals[a]);
 
   let maxEnds = members.map(()=>0);
   segments.forEach(s => {
       const m = members[s.memberId];
-      const nameStr = m && m.name ? String(m.name) : '';
-      if(nameStr === 'ALL'){
-      } else if (nameStr.includes('+')) {
-        const subNames = nameStr.split('+').map(n => n.trim().toLowerCase());
-        members.forEach((other, idx) => { 
-            const oName = other && other.name ? String(other.name).toLowerCase() : '';
-            if (subNames.includes(oName)) maxEnds[idx] = Math.max(maxEnds[idx]||0, s.end); 
-        });
+      if(m && m.name === 'ALL'){
+      } else if (m && m.name.includes('+')) {
+        const subNames = m.name.split('+').map(n => n.trim().toLowerCase());
+        members.forEach((other, idx) => { if (subNames.includes(other.name.toLowerCase())) maxEnds[idx] = Math.max(maxEnds[idx], s.end); });
       } else {
-        if (s.memberId < maxEnds.length) maxEnds[s.memberId] = Math.max(maxEnds[s.memberId]||0, s.end);
+        if (s.memberId < maxEnds.length) maxEnds[s.memberId] = Math.max(maxEnds[s.memberId], s.end);
       }
   });
 
   members.forEach((m,i)=>{
-    const nameStr = m && m.name ? String(m.name) : '';
-    if(nameStr === 'ALL' || nameStr.includes('+')) return; 
+    if(m.name === 'ALL' || m.name.includes('+')) return; 
     const targetWidth = (totals[i]/maxT)*100;
     displayWidths[i]=lerp(displayWidths[i] || 0, targetWidth, 0.09);
     
@@ -708,7 +673,6 @@ function updateAnim(t){
     row.style.order=order.indexOf(i);
   });
 
-  // LOGICA CHAT
   const visibleEvents = chatEvents.filter(e => e.start <= t);
   const eventKey = visibleEvents.map(e => e.type + '_' + (e.idx!==undefined?e.idx:e.members.join(',')) + '_' + e.start).join('|');
   
@@ -721,7 +685,6 @@ function updateAnim(t){
       updateActiveKaraoke(visibleEvents, t);
   }
 
-  // INDICADOR ESCRIBIENDO
   const actives = segments.filter(s => t >= s.start && t < s.end);
   let recentSingers = [];
   if (actives.length > 0) {
@@ -746,19 +709,18 @@ function updateAnim(t){
       let numPeople = 0;
       const namesHTML = uniqueTyperIds.map(id => {
         const m = members[id] || members[0];
-        const nameStr = m && m.name ? String(m.name) : '';
-        let displayName = nameStr;
-        if (nameStr === 'ALL') {
+        let displayName = m.name;
+        if (m.name === 'ALL') {
            displayName = 'Todos'; numPeople += 2;
-        } else if (nameStr.includes('+')) {
-           numPeople += nameStr.split('+').length;
+        } else if (m.name.includes('+')) {
+           numPeople += m.name.split('+').length;
         } else {
            numPeople += 1;
         }
         return `<span style="color:${m.color}; font-weight:600;">${displayName}</span>`;
       }).join(', ');
       
-      const verb = numPeople > 1 ? 'están' : 'está';
+      const verb = numPeople > 1 ? 'estan' : 'esta';
       typingHTML = `<span class="typing-anim">${namesHTML} ${verb} escribiendo...</span>`;
     }
   }
@@ -790,9 +752,7 @@ function loop(ts){
   updateAnim(curTime);
   
   if(curTime>=dur){
-    playing=false; 
-    document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-play"></i> Play');
-    lastTS=null;
+    playing=false; document.getElementById('play-btn').innerHTML='<i class="ti ti-player-play"></i> Play'; lastTS=null;
     if(ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo();
     return;
   }
@@ -803,25 +763,25 @@ function togglePlay(){
   const dur=+document.getElementById('song-dur').value||200;
   if(curTime>=dur)curTime=0;
   playing=!playing;
+  const btn=document.getElementById('play-btn');
   
   if(playing){
-    document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-pause"></i> Pausa');
-    lastTS=null;
+    btn.innerHTML='<i class="ti ti-player-pause"></i> Pausa'; lastTS=null;
     if(ytPlayer && ytPlayer.playVideo) {
        ytPlayer.seekTo(curTime);
        ytPlayer.playVideo();
     }
     animId=requestAnimationFrame(loop);
   } else {
-    document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-play"></i> Play');
+    btn.innerHTML='<i class="ti ti-player-play"></i> Play';
     if(ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo();
     if(animId)cancelAnimationFrame(animId);
   }
 }
 
 function resetAnim(){
-  playing=false;if(animId)cancelAnimationFrame(animId); curTime=0;lastTS=null; prevEventKey='';
-  document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-play"></i> Play');
+  playing=false;if(animId)cancelAnimationFrame(animId); curTime=0;lastTS=null;
+  document.getElementById('play-btn').innerHTML='<i class="ti ti-player-play"></i> Play';
   if(ytPlayer && ytPlayer.pauseVideo) { ytPlayer.pauseVideo(); ytPlayer.seekTo(0); }
   initDisplayState();buildBars();updateAnim(0);
 }
@@ -836,7 +796,7 @@ function scrub(v){
 
 async function recordScreen() {
   try {
-    alert("NOTA IMPORTANTE:\n\nPara que la grabación tenga sonido, es IMPRESCINDIBLE que en la siguiente pantalla actives la casilla 'Compartir audio de la pestaña'.");
+    alert("NOTA IMPORTANTE:\n\nPara que la grabacion tenga sonido, es IMPRESCINDIBLE que en la siguiente pantalla actives la casilla 'Compartir audio de la pestaña'.\n\nSi no la activas, el video se guardara mudo.");
     const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: { displaySurface: "browser" }, audio: true });
     
     if (displayStream.getAudioTracks().length === 0) {
@@ -850,26 +810,26 @@ async function recordScreen() {
     recorder.onstop = () => {
       const songTitle = document.getElementById('song-title').value.trim();
       const fileName = songTitle ? songTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '_video.webm' : 'line_distribution_video.webm';
+
       const blob = new Blob(chunks, { type: 'video/webm' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a'); a.href = url; a.download = fileName; a.click();
       displayStream.getTracks().forEach(t => t.stop());
     };
+    
     recorder.start();
-  } catch (err) { console.error(err); }
+  } catch (err) { 
+    console.error(err);
+  }
 }
 
 function renderStats(){
   const dur = +document.getElementById('song-dur').value || 200;
   const totals = computeTotals(dur); 
   const total=totals.reduce((a,b)=>a+b,0)||1;
-  const sorted=[...members.map((_,i)=>i)].filter(i => {
-      const n = members[i] && members[i].name ? String(members[i].name) : '';
-      return n !== 'ALL' && !n.includes('+');
-  }).sort((a,b)=>totals[b]-totals[a]);
+  const sorted=[...members.map((_,i)=>i)].filter(i => members[i].name !== 'ALL' && !members[i].name.includes('+')).sort((a,b)=>totals[b]-totals[a]);
 
   const canvas=document.getElementById('donut-canvas');
-  if(!canvas) return;
   const targetAngles=members.map((_,i)=>(totals[i]/total)*Math.PI*2);
   if(donutAngles.length!==members.length)donutAngles=members.map(()=>0);
   if(donutAnimId)cancelAnimationFrame(donutAnimId);
@@ -914,8 +874,7 @@ function animateDonut(canvas,targets,totals,total,frame){
   let startAngle=-Math.PI/2;
   const GAP=0.018;
   members.forEach((m,i)=>{
-    const nameStr = m && m.name ? String(m.name) : '';
-    if(nameStr === 'ALL' || nameStr.includes('+')) return;
+    if(m.name === 'ALL' || m.name.includes('+')) return;
     const sweep=Math.max(donutAngles[i]-GAP,0);
     if(sweep<=0)return;
     ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,R,startAngle,startAngle+sweep); ctx.closePath();
@@ -923,15 +882,8 @@ function animateDonut(canvas,targets,totals,total,frame){
   });
   
   ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fillStyle=bg;ctx.fill();
-  
-  const validTotals = totals.filter((_, i) => {
-      const n = members[i] && members[i].name ? String(members[i].name) : '';
-      return n !== 'ALL' && !n.includes('+');
-  });
-  const maxTotal = validTotals.length > 0 ? Math.max(...validTotals) : 0;
-  const pctTop=Math.round((maxTotal/total)*100);
-  const topIdx=totals.indexOf(maxTotal);
-  
+  const pctTop=Math.round((Math.max(...totals)/total)*100);
+  const topIdx=totals.indexOf(Math.max(...totals));
   ctx.fillStyle=isDark?'#e8e6de':'#1a1a18';
   ctx.font='500 22px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
   ctx.fillText(pctTop+'%',cx,cy-7);
@@ -966,68 +918,24 @@ function exportData() {
 function importData(e) {
   const file = e.target.files[0]; if (!file) return;
   const reader = new FileReader();
-  reader.onload = function(event) {
+  reader.onload = async function(event) {
     try {
       const data = JSON.parse(event.target.result);
-      
-      if (data.members && Array.isArray(data.members)) {
-          members = data.members.filter(m => m !== null && typeof m === 'object');
-          if(members.length === 0) members.push({name:'Cantante', color:'#7F77DD', avatar:''});
-          members.forEach(m => {
-             m.name = m.name ? String(m.name) : 'Desconocido';
-             m.color = m.color || '#7F77DD';
-             m.avatar = m.avatar || '';
-          });
-      }
-      
-      if (data.segments && Array.isArray(data.segments)) {
-          segments = data.segments.filter(s => s !== null && typeof s === 'object');
-          segments.forEach(s => {
-             s.start = Number(s.start) || 0;
-             s.end = Number(s.end) || 0;
-             s.lyric = s.lyric || '';
-             s.translation = s.translation || '';
-             s.memberId = Number(s.memberId) || 0;
-             if(s.memberId >= members.length) s.memberId = 0;
-          });
-      }
-      
+      if (data.members) members = data.members;
+      if (data.segments) segments = data.segments;
       if (data.songTitle !== undefined) document.getElementById('song-title').value = data.songTitle;
       if (data.songDur !== undefined) document.getElementById('song-dur').value = data.songDur;
       if (data.projectBg) { projectBg = data.projectBg; applyBg(); }
       
       if (data.currentVideoId) {
         document.getElementById('yt-url').value = data.currentVideoId;
-        let attempts = 0;
-        function tryLoadYT() {
-            if (typeof YT !== 'undefined' && YT.Player) {
-                loadYouTubeVideo();
-            } else if (attempts < 20) {
-                attempts++;
-                setTimeout(tryLoadYT, 500);
-            }
-        }
-        tryLoadYT();
+        loadYouTubeVideo();
       }
 
-      curTime = 0;
-      prevEventKey = '';
-      activeCapIdx = 0;
-      if(ytPlayer && ytPlayer.seekTo) { ytPlayer.seekTo(0); ytPlayer.pauseVideo(); }
-      if(animId) cancelAnimationFrame(animId);
-      playing = false;
-      document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-play"></i> Play');
-      
       renderM(); renderS(); initDisplayState();
-      buildChatEvents(); // Vuelve a montar el historial del chat
-      
       if(document.getElementById('tab-stats').classList.contains('active')) renderStats();
       if(document.getElementById('tab-animate').classList.contains('active')) { buildBars(); updateAnim(0); }
-      
-    } catch (err) { 
-      console.error(err);
-      alert("Error detallado al cargar el archivo JSON: " + err.message + "\n\nAsegúrate de que el archivo no está corrupto."); 
-    }
+    } catch (err) { alert("Error al leer el archivo JSON."); }
   };
   reader.readAsText(file); e.target.value = ''; 
 }
