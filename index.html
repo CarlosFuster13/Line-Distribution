@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Line Distribution Editor</title>
+<title>Line Distribution Editor - Chat & YouTube Edition</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
 <style>
 :root {
@@ -103,67 +103,67 @@ textarea{resize:vertical;padding:8px;}
 <div class="tabs">
   <button class="tab active" onclick="sw('members')">1. Miembros</button>
   <button class="tab" onclick="sw('segments')">2. Segmentos</button>
-  <button class="tab" onclick="sw('animate')">3. Animacion Video</button>
+  <button class="tab" onclick="sw('animate')">3. Animación Video</button>
   <button class="tab" onclick="sw('stats')">4. Stats</button>
 </div>
 
 <div id="tab-members" class="panel active">
   <div class="stitle">Miembros del grupo</div>
-  <p class="hint" style="margin-bottom:10px;">Añade "ALL" para coros. Miembros unidos por "+" (ej: "Jin + Suga"). Haz clic en el circulo de color para subir foto.</p>
+  <p class="hint" style="margin-bottom:10px;">Añade "ALL" para coros. Miembros unidos por "+" (ej: "Jin + Suga"). Haz clic en el círculo de color para subir foto.</p>
   <div id="mlist"></div>
   <div style="display:flex;gap:8px;margin-top:.5rem;">
     <input type="text" id="nm-inp" placeholder="Nombre del miembro" style="flex:1;" />
-    <button class="btn" onclick="addM()">Añadir</button>
+    <button class="btn" onclick="addM()"><i class="ti ti-plus"></i> Añadir</button>
   </div>
 </div>
 
 <div id="tab-segments" class="panel">
-  <div class="stitle">Cancion y Sincronizacion de YouTube</div>
+  <div class="stitle">Canción y Sincronización de YouTube</div>
   <div class="card" style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;">
-    <div><label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:3px;">Titulo de la Cancion</label>
-    <input type="text" id="song-title" placeholder="Ej: Mi Cancion Genial" style="width:190px;" /></div>
-    <div><label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:3px;">Duracion (s)</label>
+    <div><label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:3px;">Título de la Canción</label>
+    <input type="text" id="song-title" placeholder="Ej: Mi Canción Genial" style="width:190px;" /></div>
+    <div><label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:3px;">Duración (s)</label>
     <input type="number" id="song-dur" value="200" min="10" style="width:80px;" /></div>
     <div style="flex:1; min-width:320px;">
       <label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:3px;">Enlace de YouTube y Controles</label>
       <div style="display:flex; gap:8px; align-items:center;">
-        <input type="text" id="yt-url" placeholder="https://www.youtube.com/watch?v=..." style="flex:1;" />
-        <button class="btn btn-p" onclick="loadYouTubeVideo()">Cargar</button>
-        <button class="btn play-toggle-btn" onclick="togglePlay()">Play</button>
+        <input type="text" id="yt-url" placeholder="https://www.youtube.com/watch?v=... o URL de Shorts" style="flex:1;" />
+        <button class="btn btn-p" onclick="loadYouTubeVideo()"><i class="ti ti-brand-youtube"></i> Cargar</button>
+        <button class="btn play-toggle-btn" onclick="togglePlay()"><i class="ti ti-player-play"></i> Play</button>
         <span id="seg-time-display" style="font-family:monospace; font-size:13px; color:var(--color-text-secondary); min-width:45px;">0.00s</span>
       </div>
     </div>
   </div>
 
-  <div class="stitle" style="margin-top:1rem;">Generador Rapido de Letra</div>
+  <div class="stitle" style="margin-top:1rem;">Generador Rápido de Letra</div>
   <div class="card" style="display:flex;flex-direction:column;gap:8px;">
-    <textarea id="bulk-lyrics" rows="3" placeholder="Pega aqui tu letra. Cada linea creara un segmento nuevo con 5 segundos por defecto." style="width:100%;"></textarea>
-    <button class="btn" onclick="addBulkLyrics()">Generar lineas</button>
+    <textarea id="bulk-lyrics" rows="3" placeholder="Pega aquí tu letra. Cada línea creará un segmento nuevo con 5 segundos por defecto." style="width:100%;"></textarea>
+    <button class="btn" onclick="addBulkLyrics()"><i class="ti ti-list-check"></i> Generar líneas</button>
   </div>
 
   <div class="stitle" style="margin-top:1rem; display:flex; justify-content:space-between; align-items:center;">
     <span>Segmentos de letra</span>
-    <button class="btn btn-d" onclick="removeAllS()" style="padding:4px 8px; font-size:11px;">Vaciar todo</button>
+    <button class="btn btn-d" onclick="removeAllS()" style="padding:4px 8px; font-size:11px;"><i class="ti ti-trash"></i> Vaciar todo</button>
   </div>
   
-  <p class="hint" style="margin-bottom:10px;">Selecciona el circulo para activar los atajos. ESPACIO: Play/Pausa | Tecla I: Captura Inicio | Tecla O: Captura Fin y avanza.</p>
+  <p class="hint" style="margin-bottom:10px;">Selecciona el círculo para activar los atajos. ESPACIO: Play/Pausa | Tecla I: Captura Inicio | Tecla O: Captura Fin y avanza.</p>
 
   <div class="seg-grid" style="padding:0 6px;margin-bottom:3px;border:none;">
     <span></span><span></span><span class="seg-hdr">Inicio (s)</span><span class="seg-hdr">Fin (s)</span>
-    <span class="seg-hdr">Letra principal y Traduccion</span><span class="seg-hdr">Miembro</span><span></span>
+    <span class="seg-hdr">Letra principal y Traducción</span><span class="seg-hdr">Miembro</span><span></span>
   </div>
   <div id="slist"></div>
-  <button class="btn" onclick="addS()" style="margin-top:.4rem;">Añadir linea al final</button>
+  <button class="btn" onclick="addS()" style="margin-top:.4rem;"><i class="ti ti-plus"></i> Añadir línea al final</button>
 </div>
 
 <div id="tab-animate" class="panel">
   <div style="margin-bottom:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-    <button class="btn" onclick="toggleTheme()">Tema Oscuro/Claro</button>
+    <button class="btn" onclick="toggleTheme()"><i class="ti ti-moon"></i> Tema Oscuro/Claro</button>
     <label class="btn" style="cursor:pointer;">
-      Poner Fondo Grafica
+      <i class="ti ti-photo"></i> Poner Fondo Gráfica
       <input type="file" accept="image/*" style="display:none;" onchange="setBgImage(event)">
     </label>
-    <button class="btn btn-d" onclick="recordScreen()">Exportar / Grabar Pestaña</button>
+    <button class="btn btn-d" onclick="recordScreen()"><i class="ti ti-video"></i> Exportar / Grabar Pestaña</button>
   </div>
 
   <div id="split-layout">
@@ -198,8 +198,8 @@ textarea{resize:vertical;padding:8px;}
   </div>
   
   <div class="ctrl-row">
-    <button class="btn btn-p play-toggle-btn" onclick="togglePlay()">Play</button>
-    <button class="btn" onclick="resetAnim()">Reiniciar</button>
+    <button class="btn btn-p play-toggle-btn" onclick="togglePlay()"><i class="ti ti-player-play"></i> Play</button>
+    <button class="btn" onclick="resetAnim()"><i class="ti ti-refresh"></i> Reiniciar</button>
     <select id="speed-sel" onchange="changeSpeed(this.value)" style="font-size:13px;">
       <option value="0.5">0.5×</option>
       <option value="1" selected>1×</option>
@@ -213,8 +213,8 @@ textarea{resize:vertical;padding:8px;}
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
     <div class="stitle" style="margin-bottom:0;">Resultados</div>
     <div style="display:flex; gap:8px;">
-      <button class="btn" onclick="exportData()">Exportar Proyecto (.json)</button>
-      <button class="btn" onclick="document.getElementById('import-file').click()">Importar Proyecto</button>
+      <button class="btn" onclick="exportData()"><i class="ti ti-download"></i> Exportar Proyecto (.json)</button>
+      <button class="btn" onclick="document.getElementById('import-file').click()"><i class="ti ti-upload"></i> Importar Proyecto</button>
       <input type="file" id="import-file" accept=".json" style="display:none;" onchange="importData(event)" />
     </div>
   </div>
@@ -240,8 +240,8 @@ let members=[
   {name:'ALL',color:PAL[8], avatar:''}, 
 ];
 let segments=[
-  {start:0,end:5.50,lyric:'Jin empieza la cancion', translation:'Traduccion', memberId:0},
-  {start:8.00,end:12.00,lyric:'Suga se une despues', translation:'Suga continua', memberId:1}, 
+  {start:0,end:5.50,lyric:'Jin empieza la canción', translation:'Traducción opcional', memberId:0},
+  {start:8.00,end:12.00,lyric:'Suga se une después', translation:'Suga continúa', memberId:1}, 
 ];
 
 let playing=false,curTime=0,lastTS=null,animId=null,playSpeed=1;
@@ -269,7 +269,7 @@ function extractVideoID(url){
 function loadYouTubeVideo() {
   const url = document.getElementById('yt-url').value;
   const vid = extractVideoID(url);
-  if(!vid) { alert("Introduce una URL de YouTube valida."); return; }
+  if(!vid) { alert("Introduce una URL de YouTube válida."); return; }
   currentVideoId = url;
 
   if (typeof YT === 'undefined' || !YT.Player) {
@@ -295,11 +295,11 @@ function onPlayerReady(event) {
 function onPlayerStateChange(event) {
   if (event.data == YT.PlayerState.PLAYING && !playing) {
     playing = true;
-    document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='Pausa');
+    document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-pause"></i> Pausa');
     animId = requestAnimationFrame(loop);
   } else if ((event.data == YT.PlayerState.PAUSED || event.data == YT.PlayerState.ENDED) && playing) {
     playing = false;
-    document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='Play');
+    document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-play"></i> Play');
     if(animId) cancelAnimationFrame(animId);
   }
 }
@@ -391,8 +391,8 @@ function buildChatEvents() {
       } else if (nameStr.includes('+')) {
         const subNames = nameStr.split('+').map(n => n.trim().toLowerCase());
         members.forEach((other, idx) => { 
-            const otherName = other && other.name ? String(other.name).toLowerCase() : '';
-            if (subNames.includes(otherName)) maxEnds[idx] = Math.max(maxEnds[idx]||0, s.end); 
+            const oName = other && other.name ? String(other.name).toLowerCase() : '';
+            if (subNames.includes(oName)) maxEnds[idx] = Math.max(maxEnds[idx]||0, s.end); 
         });
       } else {
         if (s.memberId < maxEnds.length) maxEnds[s.memberId] = Math.max(maxEnds[s.memberId]||0, s.end);
@@ -511,7 +511,7 @@ function renderM(){
       </div>
       <input type="text" value="${m.name}" style="flex:1;min-width:70px;" onchange="members[${i}].name=this.value;renderS();" />
       <div style="display:flex;gap:4px;flex-wrap:wrap;">${cols}</div>
-      <button class="btn btn-d" onclick="removeM(${i})" style="padding:4px 8px;">X</button>`;
+      <button class="btn btn-d" onclick="removeM(${i})" style="padding:4px 8px;"><i class="ti ti-trash"></i></button>`;
     el.appendChild(d);
   });
   buildChatEvents();
@@ -538,15 +538,15 @@ function renderS(){
     d.ondragstart = (e) => dStart(e, i); d.ondragover = dOver; d.ondrop = (e) => dDrop(e, i); d.ondragend = dEnd;
     
     d.innerHTML=`
-      <div class="drag-handle">::</div>
+      <div class="drag-handle"><i class="ti ti-grip-vertical"></i></div>
       <div style="display:flex;justify-content:center;"><input type="radio" name="capRadio" ${activeCapIdx===i?'checked':''} onchange="activeCapIdx=${i};renderS()"></div>
       <div style="display:flex; gap:2px; align-items:center;">
         <input type="number" value="${s.start}" min="0" step="0.01" style="width:100%;" onchange="segments[${i}].start=+this.value;buildChatEvents();" />
-        <button class="btn" onclick="captureT(${i}, 'start')" style="padding:4px 6px;">[</button>
+        <button class="btn" onclick="captureT(${i}, 'start')" style="padding:4px 6px;"><i class="ti ti-clock"></i></button>
       </div>
       <div style="display:flex; gap:2px; align-items:center;">
         <input type="number" value="${s.end}" min="0" step="0.01" style="width:100%;" onchange="segments[${i}].end=+this.value;buildChatEvents();" />
-        <button class="btn" onclick="captureT(${i}, 'end')" style="padding:4px 6px;">]</button>
+        <button class="btn" onclick="captureT(${i}, 'end')" style="padding:4px 6px;"><i class="ti ti-clock"></i></button>
       </div>
       <div style="display:flex; flex-direction:column; gap:4px;">
         <input type="text" placeholder="Letra Principal" value="${s.lyric}" onchange="segments[${i}].lyric=this.value;buildChatEvents();" />
@@ -554,8 +554,8 @@ function renderS(){
       </div>
       <select onchange="segments[${i}].memberId=+this.value;this.style.borderLeft='3px solid '+(members[+this.value]||members[0]).color;buildChatEvents();" style="border-left:3px solid ${m.color};width:100%;height:100%;">${mopts(s.memberId)}</select>
       <div style="display:flex; gap:4px;">
-        <button class="btn" onclick="insertS(${i})" style="padding:4px 7px;">+</button>
-        <button class="btn btn-d" onclick="rmS(${i})" style="padding:4px 7px;">X</button>
+        <button class="btn" onclick="insertS(${i})" style="padding:4px 7px;"><i class="ti ti-plus"></i></button>
+        <button class="btn btn-d" onclick="rmS(${i})" style="padding:4px 7px;"><i class="ti ti-x"></i></button>
       </div>`;
     el.appendChild(d);
   });
@@ -773,7 +773,7 @@ function loop(ts){
   
   if(curTime>=dur){
     playing=false; 
-    document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='Play');
+    document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-play"></i> Play');
     lastTS=null;
     if(ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo();
     return;
@@ -787,7 +787,7 @@ function togglePlay(){
   playing=!playing;
   
   if(playing){
-    document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='Pausa');
+    document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-pause"></i> Pausa');
     lastTS=null;
     if(ytPlayer && ytPlayer.playVideo) {
        ytPlayer.seekTo(curTime);
@@ -795,15 +795,15 @@ function togglePlay(){
     }
     animId=requestAnimationFrame(loop);
   } else {
-    document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='Play');
+    document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-play"></i> Play');
     if(ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo();
     if(animId)cancelAnimationFrame(animId);
   }
 }
 
 function resetAnim(){
-  playing=false;if(animId)cancelAnimationFrame(animId); curTime=0;lastTS=null;
-  document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='Play');
+  playing=false;if(animId)cancelAnimationFrame(animId); curTime=0;lastTS=null; prevEventKey='';
+  document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-play"></i> Play');
   if(ytPlayer && ytPlayer.pauseVideo) { ytPlayer.pauseVideo(); ytPlayer.seekTo(0); }
   initDisplayState();buildBars();updateAnim(0);
 }
@@ -923,7 +923,6 @@ function animateDonut(canvas,targets,totals,total,frame){
   if(!done)donutAnimId=requestAnimationFrame(()=>animateDonut(canvas,targets,totals,total,frame+1));
 }
 
-// --- IMPORTAR Y EXPORTAR REPARADO ---
 function exportData() {
   const songTitle = document.getElementById('song-title').value.trim();
   const fileName = songTitle ? songTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '_proyecto.json' : 'line_distribution_proyecto.json';
@@ -953,7 +952,6 @@ function importData(e) {
     try {
       const data = JSON.parse(event.target.result);
       
-      // Sanitización profunda para evitar cuelgues
       if (data.members && Array.isArray(data.members)) {
           members = data.members.filter(m => m !== null && typeof m === 'object');
           if(members.length === 0) members.push({name:'Cantante', color:'#7F77DD', avatar:''});
@@ -994,8 +992,16 @@ function importData(e) {
         tryLoadYT();
       }
 
+      curTime = 0;
+      prevEventKey = '';
       activeCapIdx = 0;
+      if(ytPlayer && ytPlayer.seekTo) { ytPlayer.seekTo(0); ytPlayer.pauseVideo(); }
+      if(animId) cancelAnimationFrame(animId);
+      playing = false;
+      document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-play"></i> Play');
+      
       renderM(); renderS(); initDisplayState();
+      buildChatEvents();
       
       if(document.getElementById('tab-stats').classList.contains('active')) renderStats();
       if(document.getElementById('tab-animate').classList.contains('active')) { buildBars(); updateAnim(0); }
