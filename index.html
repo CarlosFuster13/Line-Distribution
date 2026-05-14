@@ -60,7 +60,7 @@ textarea{resize:vertical;padding:8px;}
 #split-layout { display: flex; gap: 16px; height: 65vh; min-height: 500px; margin-bottom: 1rem; align-items: stretch; }
 #left-panel { flex: 1; min-width: 320px; display: flex; flex-direction: column; gap: 16px; }
 #yt-container { flex: 1 1 50%; min-height: 200px; border-radius: 12px; overflow: hidden; background: #000; border: 1px solid var(--color-border-tertiary); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-#anim-wrap { flex: 1 1 50%; position:relative; border-radius:12px; overflow:hidden; border:1px solid var(--color-border-tertiary); display: flex; flex-direction: column;}
+#chat-wrap { flex: 1 1 50%; position:relative; border-radius:12px; overflow:hidden; border:1px solid var(--color-border-tertiary); display: flex; flex-direction: column;}
 #right-panel { flex: 1; min-width: 320px; position: relative; border-radius: 12px; border: 1px solid var(--color-border-tertiary); overflow: hidden; display: flex; flex-direction: column; }
 
 .custom-bg { position:absolute; top:0; left:0; right:0; bottom:0; background-size:cover; background-position:center; z-index:0; }
@@ -171,11 +171,14 @@ textarea{resize:vertical;padding:8px;}
         <div id="yt-player"></div>
       </div>
       
-      <div id="anim-wrap">
+      <div id="chat-wrap">
         <div class="custom-bg"></div>
         <div class="custom-overlay"></div>
-        <div class="content-z" style="padding: 1.25rem;">
-          <div id="bars-container" style="display:flex; flex-direction:column; flex:1; overflow-y:auto; padding-right:8px;"></div>
+        <div class="content-z">
+          <div id="chat-history"></div>
+          <div id="typing-indicator-wrap">
+            <div id="typing-indicator" style="font-size:13px; color:var(--color-text-secondary); min-height:18px; opacity:0; transition: opacity 0.3s; font-style:italic;"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -183,11 +186,8 @@ textarea{resize:vertical;padding:8px;}
     <div id="right-panel">
       <div class="custom-bg"></div>
       <div class="custom-overlay"></div>
-      <div class="content-z">
-        <div id="chat-history"></div>
-        <div id="typing-indicator-wrap">
-          <div id="typing-indicator" style="font-size:13px; color:var(--color-text-secondary); min-height:18px; opacity:0; transition: opacity 0.3s; font-style:italic;"></div>
-        </div>
+      <div class="content-z" style="padding: 1.25rem;">
+        <div id="bars-container" style="display:flex; flex-direction:column; flex:1; overflow-y:auto; padding-right:8px;"></div>
       </div>
     </div>
   </div>
@@ -198,7 +198,7 @@ textarea{resize:vertical;padding:8px;}
   </div>
   
   <div class="ctrl-row">
-    <button class="btn btn-p" id="play-btn" onclick="togglePlay()"><i class="ti ti-player-play"></i> Play</button>
+    <button class="btn btn-p play-toggle-btn" onclick="togglePlay()"><i class="ti ti-player-play"></i> Play</button>
     <button class="btn" onclick="resetAnim()"><i class="ti ti-refresh"></i> Reiniciar</button>
     <select id="speed-sel" onchange="changeSpeed(this.value)" style="font-size:13px;">
       <option value="0.5">0.5×</option>
@@ -301,11 +301,11 @@ function onPlayerReady(event) {
 function onPlayerStateChange(event) {
   if (event.data == YT.PlayerState.PLAYING && !playing) {
     playing = true;
-    document.getElementById('play-btn').innerHTML='<i class="ti ti-player-pause"></i> Pausa';
+    document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-pause"></i> Pausa');
     animId = requestAnimationFrame(loop);
   } else if ((event.data == YT.PlayerState.PAUSED || event.data == YT.PlayerState.ENDED) && playing) {
     playing = false;
-    document.getElementById('play-btn').innerHTML='<i class="ti ti-player-play"></i> Play';
+    document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-play"></i> Play');
     if(animId) cancelAnimationFrame(animId);
   }
 }
@@ -347,8 +347,8 @@ function changeSpeed(val) {
 // --- UI PRINCIPAL ---
 function applyBg() {
   if(!projectBg) return;
-  document.getElementById('anim-bg').style.backgroundImage = `url(${projectBg})`;
-  document.getElementById('anim-overlay').style.background = 'rgba(0,0,0,0.7)';
+  document.querySelectorAll('.custom-bg').forEach(el => el.style.backgroundImage = `url(${projectBg})`);
+  document.querySelectorAll('.custom-overlay').forEach(el => el.style.background = 'rgba(0,0,0,0.7)');
   document.body.classList.add('dark-theme'); renderStats();
 }
 
@@ -408,10 +408,16 @@ function renderM(){
       <button class="btn btn-d" onclick="removeM(${i})" style="padding:4px 8px;"><i class="ti ti-trash"></i></button>`;
     el.appendChild(d);
   });
+  buildChatEvents();
 }
 function setCol(i,ci){members[i].color=PAL[ci];renderM();initDisplayState();buildBars();}
 function addM(){const inp=document.getElementById('nm-inp');const n=inp.value.trim()||'Miembro '+(members.length+1);members.push({name:n,color:PAL[members.length%PAL.length],avatar:''});inp.value='';renderM();renderS();initDisplayState();}
-function removeM(i){members.splice(i,1);segments.forEach(s=>{if(s.memberId>=members.length)s.memberId=0;});renderM();renderS();initDisplayState();}
+function removeM(i){
+  members.splice(i,1);
+  if(members.length === 0) members.push({name:'Cantante', color:'#7F77DD', avatar:''});
+  segments.forEach(s=>{if(s.memberId>=members.length)s.memberId=0;});
+  renderM();renderS();initDisplayState();
+}
 
 function mopts(sel){return members.map((m,i)=>`<option value="${i}"${i===sel?' selected':''}>${m.name}</option>`).join('');}
 
@@ -428,16 +434,16 @@ function renderS(){
       <div class="drag-handle"><i class="ti ti-grip-vertical"></i></div>
       <div style="display:flex;justify-content:center;"><input type="radio" name="capRadio" ${activeCapIdx===i?'checked':''} onchange="activeCapIdx=${i};renderS()"></div>
       <div style="display:flex; gap:2px; align-items:center;">
-        <input type="number" value="${s.start}" min="0" step="0.01" style="width:100%;" onchange="segments[${i}].start=+this.value;" />
+        <input type="number" value="${s.start}" min="0" step="0.01" style="width:100%;" onchange="segments[${i}].start=+this.value;buildChatEvents();" />
         <button class="btn" onclick="captureT(${i}, 'start')" style="padding:4px 6px;"><i class="ti ti-clock"></i></button>
       </div>
       <div style="display:flex; gap:2px; align-items:center;">
-        <input type="number" value="${s.end}" min="0" step="0.01" style="width:100%;" onchange="segments[${i}].end=+this.value;" />
+        <input type="number" value="${s.end}" min="0" step="0.01" style="width:100%;" onchange="segments[${i}].end=+this.value;buildChatEvents();" />
         <button class="btn" onclick="captureT(${i}, 'end')" style="padding:4px 6px;"><i class="ti ti-clock"></i></button>
       </div>
       <div style="display:flex; flex-direction:column; gap:4px;">
         <input type="text" placeholder="Letra Principal" value="${s.lyric}" onchange="segments[${i}].lyric=this.value;buildChatEvents();" />
-        <input type="text" placeholder="Traduccion (Opcional)" value="${s.translation||''}" onchange="segments[${i}].translation=this.value;buildChatEvents();" />
+        <input type="text" placeholder="Traducción (Opcional)" value="${s.translation||''}" onchange="segments[${i}].translation=this.value;buildChatEvents();" />
       </div>
       <select onchange="segments[${i}].memberId=+this.value;this.style.borderLeft='3px solid '+(members[+this.value]||members[0]).color;buildChatEvents();" style="border-left:3px solid ${m.color};width:100%;height:100%;">${mopts(s.memberId)}</select>
       <div style="display:flex; gap:4px;">
@@ -449,7 +455,7 @@ function renderS(){
   buildChatEvents();
 }
 
-function addS(){const last=segments[segments.length-1];const st=last?last.end:0;segments.push({start:st,end:st+12,lyric:'Nueva linea...',translation:'',memberId:0});renderS();}
+function addS(){const last=segments[segments.length-1];const st=last?last.end:0;segments.push({start:st,end:st+12,lyric:'Nueva línea...',translation:'',memberId:0});renderS();}
 function insertS(index){
   const curr = segments[index]; const st = curr ? curr.end : 0;
   segments.splice(index + 1, 0, { start: st, end: st + 3, lyric: 'Nueva...', translation:'', memberId: curr.memberId });
@@ -479,10 +485,18 @@ function computeTotals(t){
       const eff=Math.min(s.end,t);
       if(eff>s.start){
         const dur = eff - s.start; const m = members[s.memberId];
-        if(m.name === 'ALL') { members.forEach((other, idx) => { if(other.name !== 'ALL' && !other.name.includes('+')) totals[idx] += dur; });
-        } else if (m.name.includes('+')) {
-          const subNames = m.name.split('+').map(n => n.trim().toLowerCase());
-          members.forEach((other, idx) => { if (subNames.includes(other.name.toLowerCase())) totals[idx] += dur; });
+        const nameStr = m && m.name ? String(m.name) : '';
+        if(nameStr === 'ALL') { 
+            members.forEach((other, idx) => { 
+                const oName = other && other.name ? String(other.name) : '';
+                if(oName !== 'ALL' && !oName.includes('+')) totals[idx] += dur; 
+            });
+        } else if (nameStr.includes('+')) {
+          const subNames = nameStr.split('+').map(n => n.trim().toLowerCase());
+          members.forEach((other, idx) => { 
+              const oName = other && other.name ? String(other.name).toLowerCase() : '';
+              if (subNames.includes(oName)) totals[idx] += dur; 
+          });
         } else { totals[s.memberId] += dur; }
       }
     }
@@ -493,7 +507,8 @@ function computeTotals(t){
 function buildBars(){
   const c=document.getElementById('bars-container');c.innerHTML='';
   members.forEach((m,i)=>{
-    if(m.name === 'ALL' || m.name.includes('+')) return; 
+    const nameStr = m && m.name ? String(m.name) : '';
+    if(nameStr === 'ALL' || nameStr.includes('+')) return; 
     let avatarHTML = m.avatar 
        ? `<img src="${m.avatar}" style="width:22px;height:22px;border-radius:50%;object-fit:cover; border:1.5px solid ${m.color}; background:var(--color-background-primary);">` 
        : '';
@@ -517,10 +532,14 @@ function buildChatEvents() {
   
   segments.forEach(s => {
       const m = members[s.memberId];
-      if(m && m.name === 'ALL'){
-      } else if (m && m.name.includes('+')) {
-        const subNames = m.name.split('+').map(n => n.trim().toLowerCase());
-        members.forEach((other, idx) => { if (subNames.includes(other.name.toLowerCase())) maxEnds[idx] = Math.max(maxEnds[idx]||0, s.end); });
+      const nameStr = m && m.name ? String(m.name) : '';
+      if(nameStr === 'ALL'){
+      } else if (nameStr.includes('+')) {
+        const subNames = nameStr.split('+').map(n => n.trim().toLowerCase());
+        members.forEach((other, idx) => { 
+            const otherName = other && other.name ? String(other.name).toLowerCase() : '';
+            if (subNames.includes(otherName)) maxEnds[idx] = Math.max(maxEnds[idx]||0, s.end); 
+        });
       } else {
         if (s.memberId < maxEnds.length) maxEnds[s.memberId] = Math.max(maxEnds[s.memberId]||0, s.end);
       }
@@ -532,7 +551,8 @@ function buildChatEvents() {
 
   let leavesMap = {};
   members.forEach((m, i) => {
-      if(m.name !== 'ALL' && !m.name.includes('+') && maxEnds[i] > 0) {
+      const nameStr = m && m.name ? String(m.name) : '';
+      if(nameStr !== 'ALL' && !nameStr.includes('+') && maxEnds[i] > 0) {
           if(!leavesMap[maxEnds[i]]) leavesMap[maxEnds[i]] = [];
           leavesMap[maxEnds[i]].push(i);
       }
@@ -627,31 +647,38 @@ function updateActiveKaraoke(visibleEvents, t) {
 
 function updateAnim(t){
   const dur=+document.getElementById('song-dur').value||200;
-  document.getElementById('time-label').textContent=fmt(t)+' / '+fmt(dur);
-  const tk = document.getElementById('ticker-time');
-  if(tk) tk.textContent = t.toFixed(2) + 's';
   document.getElementById('scrubber').max = dur;
   document.getElementById('scrubber').value = t;
 
   const totals=computeTotals(t);
-  const validTotals = totals.filter((_, i) => members[i].name !== 'ALL' && !members[i].name.includes('+'));
-  const maxT=Math.max(...validTotals, 1);
+  
+  const validTotals = totals.filter((_, i) => {
+      const n = members[i] && members[i].name ? String(members[i].name) : '';
+      return n !== 'ALL' && !n.includes('+');
+  });
+  const maxTotal = validTotals.length > 0 ? Math.max(...validTotals) : 0;
+  const maxT = Math.max(maxTotal, 1);
   const order=[...members.map((_,i)=>i)].sort((a,b)=>totals[b]-totals[a]);
 
   let maxEnds = members.map(()=>0);
   segments.forEach(s => {
       const m = members[s.memberId];
-      if(m && m.name === 'ALL'){
-      } else if (m && m.name.includes('+')) {
-        const subNames = m.name.split('+').map(n => n.trim().toLowerCase());
-        members.forEach((other, idx) => { if (subNames.includes(other.name.toLowerCase())) maxEnds[idx] = Math.max(maxEnds[idx], s.end); });
+      const nameStr = m && m.name ? String(m.name) : '';
+      if(nameStr === 'ALL'){
+      } else if (nameStr.includes('+')) {
+        const subNames = nameStr.split('+').map(n => n.trim().toLowerCase());
+        members.forEach((other, idx) => { 
+            const oName = other && other.name ? String(other.name).toLowerCase() : '';
+            if (subNames.includes(oName)) maxEnds[idx] = Math.max(maxEnds[idx]||0, s.end); 
+        });
       } else {
-        if (s.memberId < maxEnds.length) maxEnds[s.memberId] = Math.max(maxEnds[s.memberId], s.end);
+        if (s.memberId < maxEnds.length) maxEnds[s.memberId] = Math.max(maxEnds[s.memberId]||0, s.end);
       }
   });
 
   members.forEach((m,i)=>{
-    if(m.name === 'ALL' || m.name.includes('+')) return; 
+    const nameStr = m && m.name ? String(m.name) : '';
+    if(nameStr === 'ALL' || nameStr.includes('+')) return; 
     const targetWidth = (totals[i]/maxT)*100;
     displayWidths[i]=lerp(displayWidths[i] || 0, targetWidth, 0.09);
     
@@ -720,7 +747,7 @@ function updateAnim(t){
         return `<span style="color:${m.color}; font-weight:600;">${displayName}</span>`;
       }).join(', ');
       
-      const verb = numPeople > 1 ? 'estan' : 'esta';
+      const verb = numPeople > 1 ? 'están' : 'está';
       typingHTML = `<span class="typing-anim">${namesHTML} ${verb} escribiendo...</span>`;
     }
   }
@@ -752,7 +779,9 @@ function loop(ts){
   updateAnim(curTime);
   
   if(curTime>=dur){
-    playing=false; document.getElementById('play-btn').innerHTML='<i class="ti ti-player-play"></i> Play'; lastTS=null;
+    playing=false; 
+    document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-play"></i> Play');
+    lastTS=null;
     if(ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo();
     return;
   }
@@ -763,25 +792,25 @@ function togglePlay(){
   const dur=+document.getElementById('song-dur').value||200;
   if(curTime>=dur)curTime=0;
   playing=!playing;
-  const btn=document.getElementById('play-btn');
   
   if(playing){
-    btn.innerHTML='<i class="ti ti-player-pause"></i> Pausa'; lastTS=null;
+    document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-pause"></i> Pausa');
+    lastTS=null;
     if(ytPlayer && ytPlayer.playVideo) {
        ytPlayer.seekTo(curTime);
        ytPlayer.playVideo();
     }
     animId=requestAnimationFrame(loop);
   } else {
-    btn.innerHTML='<i class="ti ti-player-play"></i> Play';
+    document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-play"></i> Play');
     if(ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo();
     if(animId)cancelAnimationFrame(animId);
   }
 }
 
 function resetAnim(){
-  playing=false;if(animId)cancelAnimationFrame(animId); curTime=0;lastTS=null;
-  document.getElementById('play-btn').innerHTML='<i class="ti ti-player-play"></i> Play';
+  playing=false;if(animId)cancelAnimationFrame(animId); curTime=0;lastTS=null; prevEventKey='';
+  document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-play"></i> Play');
   if(ytPlayer && ytPlayer.pauseVideo) { ytPlayer.pauseVideo(); ytPlayer.seekTo(0); }
   initDisplayState();buildBars();updateAnim(0);
 }
@@ -796,21 +825,56 @@ function scrub(v){
 
 async function recordScreen() {
   try {
-    alert("NOTA IMPORTANTE:\n\nPara que la grabacion tenga sonido, es IMPRESCINDIBLE que en la siguiente pantalla actives la casilla 'Compartir audio de la pestaña'.\n\nSi no la activas, el video se guardara mudo.");
-    const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: { displaySurface: "browser" }, audio: true });
+    alert("NOTA IMPORTANTE:\n\nPara que la grabación tenga sonido, es IMPRESCINDIBLE que en la siguiente pantalla actives la casilla 'Compartir audio de la pestaña'.");
+    
+    // 1. Pedimos explícitamente alta resolución (1080p) y 60 FPS
+    const displayStream = await navigator.mediaDevices.getDisplayMedia({ 
+      video: { 
+        displaySurface: "browser",
+        width: { ideal: 1920 },
+        height: { ideal: 1080 },
+        frameRate: { ideal: 60 }
+      }, 
+      audio: true 
+    });
     
     if (displayStream.getAudioTracks().length === 0) {
       alert("No se ha detectado audio. Recuerda marcar 'Compartir audio de la pestaña'.");
     }
 
-    const recorder = new MediaRecorder(displayStream);
+    const tracks = [...displayStream.getVideoTracks()];
+
+    const aud = document.getElementById('main-audio');
+    let audioStream = null;
+    if (aud) {
+      audioStream = aud.captureStream ? aud.captureStream() : (aud.mozCaptureStream ? aud.mozCaptureStream() : null);
+    }
+
+    if (audioStream && audioStream.getAudioTracks().length > 0) {
+      tracks.push(audioStream.getAudioTracks()[0]);
+    } else if (displayStream.getAudioTracks().length > 0) {
+      tracks.push(displayStream.getAudioTracks()[0]);
+    }
+
+    const combinedStream = new MediaStream(tracks);
+    
+    // 2. Forzamos un bitrate alto (8000000 bps = 8 Mbps) y mejor códec
+    const options = {
+      videoBitsPerSecond: 8000000
+    };
+    
+    // Intentamos usar VP9 para mejor calidad, si el navegador no lo soporta, caerá al predeterminado
+    if (MediaRecorder.isTypeSupported('video/webm; codecs=vp9')) {
+      options.mimeType = 'video/webm; codecs=vp9';
+    }
+
+    const recorder = new MediaRecorder(combinedStream, options);
     const chunks = [];
     
     recorder.ondataavailable = e => { if(e.data.size > 0) chunks.push(e.data); };
     recorder.onstop = () => {
       const songTitle = document.getElementById('song-title').value.trim();
       const fileName = songTitle ? songTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '_video.webm' : 'line_distribution_video.webm';
-
       const blob = new Blob(chunks, { type: 'video/webm' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a'); a.href = url; a.download = fileName; a.click();
@@ -819,7 +883,7 @@ async function recordScreen() {
     
     recorder.start();
   } catch (err) { 
-    console.error(err);
+    console.error(err); 
   }
 }
 
@@ -827,9 +891,13 @@ function renderStats(){
   const dur = +document.getElementById('song-dur').value || 200;
   const totals = computeTotals(dur); 
   const total=totals.reduce((a,b)=>a+b,0)||1;
-  const sorted=[...members.map((_,i)=>i)].filter(i => members[i].name !== 'ALL' && !members[i].name.includes('+')).sort((a,b)=>totals[b]-totals[a]);
+  const sorted=[...members.map((_,i)=>i)].filter(i => {
+      const n = members[i] && members[i].name ? String(members[i].name) : '';
+      return n !== 'ALL' && !n.includes('+');
+  }).sort((a,b)=>totals[b]-totals[a]);
 
   const canvas=document.getElementById('donut-canvas');
+  if(!canvas) return;
   const targetAngles=members.map((_,i)=>(totals[i]/total)*Math.PI*2);
   if(donutAngles.length!==members.length)donutAngles=members.map(()=>0);
   if(donutAnimId)cancelAnimationFrame(donutAnimId);
@@ -874,7 +942,8 @@ function animateDonut(canvas,targets,totals,total,frame){
   let startAngle=-Math.PI/2;
   const GAP=0.018;
   members.forEach((m,i)=>{
-    if(m.name === 'ALL' || m.name.includes('+')) return;
+    const nameStr = m && m.name ? String(m.name) : '';
+    if(nameStr === 'ALL' || nameStr.includes('+')) return;
     const sweep=Math.max(donutAngles[i]-GAP,0);
     if(sweep<=0)return;
     ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,R,startAngle,startAngle+sweep); ctx.closePath();
@@ -882,8 +951,15 @@ function animateDonut(canvas,targets,totals,total,frame){
   });
   
   ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fillStyle=bg;ctx.fill();
-  const pctTop=Math.round((Math.max(...totals)/total)*100);
-  const topIdx=totals.indexOf(Math.max(...totals));
+  
+  const validTotals = totals.filter((_, i) => {
+      const n = members[i] && members[i].name ? String(members[i].name) : '';
+      return n !== 'ALL' && !n.includes('+');
+  });
+  const maxTotal = validTotals.length > 0 ? Math.max(...validTotals) : 0;
+  const pctTop=Math.round((maxTotal/total)*100);
+  const topIdx=totals.indexOf(maxTotal);
+  
   ctx.fillStyle=isDark?'#e8e6de':'#1a1a18';
   ctx.font='500 22px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
   ctx.fillText(pctTop+'%',cx,cy-7);
@@ -918,29 +994,73 @@ function exportData() {
 function importData(e) {
   const file = e.target.files[0]; if (!file) return;
   const reader = new FileReader();
-  reader.onload = async function(event) {
+  reader.onload = function(event) {
     try {
       const data = JSON.parse(event.target.result);
-      if (data.members) members = data.members;
-      if (data.segments) segments = data.segments;
+      
+      if (data.members && Array.isArray(data.members)) {
+          members = data.members.filter(m => m !== null && typeof m === 'object');
+          if(members.length === 0) members.push({name:'Cantante', color:'#7F77DD', avatar:''});
+          members.forEach(m => {
+             m.name = m.name ? String(m.name) : 'Desconocido';
+             m.color = m.color || '#7F77DD';
+             m.avatar = m.avatar || '';
+          });
+      }
+      
+      if (data.segments && Array.isArray(data.segments)) {
+          segments = data.segments.filter(s => s !== null && typeof s === 'object');
+          segments.forEach(s => {
+             s.start = Number(s.start) || 0;
+             s.end = Number(s.end) || 0;
+             s.lyric = s.lyric || '';
+             s.translation = s.translation || '';
+             s.memberId = Number(s.memberId) || 0;
+             if(s.memberId >= members.length) s.memberId = 0;
+          });
+      }
+      
       if (data.songTitle !== undefined) document.getElementById('song-title').value = data.songTitle;
       if (data.songDur !== undefined) document.getElementById('song-dur').value = data.songDur;
       if (data.projectBg) { projectBg = data.projectBg; applyBg(); }
       
       if (data.currentVideoId) {
         document.getElementById('yt-url').value = data.currentVideoId;
-        loadYouTubeVideo();
+        let attempts = 0;
+        function tryLoadYT() {
+            if (typeof YT !== 'undefined' && YT.Player) {
+                loadYouTubeVideo();
+            } else if (attempts < 20) {
+                attempts++;
+                setTimeout(tryLoadYT, 500);
+            }
+        }
+        tryLoadYT();
       }
 
+      curTime = 0;
+      prevEventKey = '';
+      activeCapIdx = 0;
+      if(ytPlayer && ytPlayer.seekTo) { ytPlayer.seekTo(0); ytPlayer.pauseVideo(); }
+      if(animId) cancelAnimationFrame(animId);
+      playing = false;
+      document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-play"></i> Play');
+      
       renderM(); renderS(); initDisplayState();
+      buildChatEvents();
+      
       if(document.getElementById('tab-stats').classList.contains('active')) renderStats();
       if(document.getElementById('tab-animate').classList.contains('active')) { buildBars(); updateAnim(0); }
-    } catch (err) { alert("Error al leer el archivo JSON."); }
+      
+    } catch (err) { 
+      console.error(err);
+      alert("Error detallado al cargar el archivo JSON: " + err.message + "\n\nAsegúrate de que el archivo no está corrupto."); 
+    }
   };
   reader.readAsText(file); e.target.value = ''; 
 }
 
-initDisplayState();renderM();renderS();
+initDisplayState();renderM();renderS();updateAnim(0);
 </script>
 </body>
 </html>
