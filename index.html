@@ -42,6 +42,7 @@ textarea{resize:vertical;padding:8px;}
 .btn-d{color:#E24B4A;border-color:#E24B4A33;}
 .btn-d:hover{background:#FCEBEB;}
 
+/* Grid ajustado */
 .seg-grid {
   display: grid;
   grid-template-columns: 20px 20px 90px 90px 1fr 110px 64px;
@@ -56,6 +57,7 @@ textarea{resize:vertical;padding:8px;}
 .swatch.on{border-color:var(--color-text-primary);}
 .hint{font-size:12px;color:var(--color-text-secondary);margin-top:5px;}
 
+/* Split Layout Avanzado */
 #split-layout { display: flex; gap: 16px; height: 65vh; min-height: 500px; margin-bottom: 1rem; align-items: stretch; }
 #left-panel { flex: 1; min-width: 320px; display: flex; flex-direction: column; gap: 16px; }
 #yt-container { flex: 1 1 50%; min-height: 200px; border-radius: 12px; overflow: hidden; background: #000; border: 1px solid var(--color-border-tertiary); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
@@ -75,6 +77,7 @@ textarea{resize:vertical;padding:8px;}
 #chat-history { flex: 1; padding: 1.25rem; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
 #typing-indicator-wrap { padding: 0.75rem 1.25rem; border-top: 1px solid rgba(128,128,128,0.2); min-height: 48px; }
 
+/* Animación de chat y latido */
 @keyframes typingPulse {
   0% { opacity: 0.7; }
   50% { opacity: 1; }
@@ -91,6 +94,7 @@ textarea{resize:vertical;padding:8px;}
 #time-label{font-size:13px;color:var(--color-text-secondary);min-width:80px;text-align:right; font-family:monospace;}
 .ctrl-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
 
+/* Barras de scroll limpias */
 #chat-history::-webkit-scrollbar { width: 6px; }
 #chat-history::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 4px; }
 #bars-container::-webkit-scrollbar { width: 6px; }
@@ -127,7 +131,7 @@ textarea{resize:vertical;padding:8px;}
     <div style="flex:1; min-width:320px;">
       <label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:3px;">Enlace de YouTube y Controles</label>
       <div style="display:flex; gap:8px; align-items:center;">
-        <input type="text" id="yt-url" placeholder="https://www.youtube.com/watch?v=... o URL de Shorts" style="flex:1;" />
+        <input type="text" id="yt-url" placeholder="https://www.youtube.com/watch?v=..." style="flex:1;" />
         <button class="btn btn-p" onclick="loadYouTubeVideo()"><i class="ti ti-brand-youtube"></i> Cargar</button>
         <button class="btn play-toggle-btn" onclick="togglePlay()"><i class="ti ti-player-play"></i> Play</button>
         <span id="seg-time-display" style="font-family:monospace; font-size:13px; color:var(--color-text-secondary); min-width:45px;">0.00s</span>
@@ -245,7 +249,7 @@ let segments=[
 ];
 
 let playing=false,curTime=0,lastTS=null,animId=null,playSpeed=1;
-let displayWidths=[];
+let displayWidths=[], displayOrders=[];
 let donutAngles=[], donutAnimId=null;
 let activeCapIdx = 0; 
 let projectBg = '';
@@ -254,10 +258,13 @@ let currentVideoId = '';
 let chatEvents = [];
 let prevEventKey = '';
 
+// --- YOUTUBE API INTEGRATION ---
 let ytPlayer = null;
 let isYtReady = false;
 
-function onYouTubeIframeAPIReady() { isYtReady = true; }
+function onYouTubeIframeAPIReady() {
+  isYtReady = true;
+}
 
 function extractVideoID(url){
   if (!url) return null;
@@ -269,21 +276,25 @@ function extractVideoID(url){
 function loadYouTubeVideo() {
   const url = document.getElementById('yt-url').value;
   const vid = extractVideoID(url);
-  if(!vid) { alert("Introduce una URL de YouTube válida."); return; }
-  currentVideoId = url;
-
-  if (typeof YT === 'undefined' || !YT.Player) {
-     setTimeout(loadYouTubeVideo, 500);
-     return;
+  if(!vid) {
+    alert("Por favor introduce una URL de YouTube válida.");
+    return;
   }
+  
+  currentVideoId = url;
 
   if(ytPlayer && ytPlayer.loadVideoById) {
     ytPlayer.loadVideoById(vid);
   } else {
     ytPlayer = new YT.Player('yt-player', {
-      height: '100%', width: '100%', videoId: vid,
+      height: '100%',
+      width: '100%',
+      videoId: vid,
       playerVars: { 'playsinline': 1, 'controls': 1, 'disablekb': 0, 'rel': 0 },
-      events: { 'onReady': onPlayerReady, 'onStateChange': onPlayerStateChange }
+      events: {
+        'onReady': onPlayerReady,
+        'onStateChange': onPlayerStateChange
+      }
     });
   }
 }
@@ -304,9 +315,13 @@ function onPlayerStateChange(event) {
   }
 }
 
+// --- ATAJOS DE TECLADO ---
 document.addEventListener('keydown', e => {
   if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-  if(e.code === 'Space') { e.preventDefault(); togglePlay(); }
+  if(e.code === 'Space') { 
+    e.preventDefault(); 
+    togglePlay(); 
+  }
   if(e.code === 'KeyI') { e.preventDefault(); if(segments[activeCapIdx]) captureT(activeCapIdx, 'start'); }
   if(e.code === 'KeyO') { 
     e.preventDefault(); 
@@ -334,6 +349,7 @@ function changeSpeed(val) {
   if(ytPlayer && ytPlayer.setPlaybackRate) ytPlayer.setPlaybackRate(playSpeed); 
 }
 
+// --- UI PRINCIPAL ---
 function applyBg() {
   if(!projectBg) return;
   document.querySelectorAll('.custom-bg').forEach(el => el.style.backgroundImage = `url(${projectBg})`);
@@ -379,6 +395,142 @@ function sw(name){
 
 function fmt(s){ const m=Math.floor(s/60), sc=Math.floor(s%60); return m+':'+(sc<10?'0':'')+sc; }
 
+function renderM(){
+  const el=document.getElementById('mlist');el.innerHTML='';
+  members.forEach((m,i)=>{
+    const d=document.createElement('div');d.className='card';
+    d.style.cssText='display:flex;gap:8px;align-items:center;padding:.5rem .9rem;';
+    const cols=PAL.map((c,ci)=>`<div class="swatch${m.color===c?' on':''}" style="background:${c}" onclick="setCol(${i},${ci})"></div>`).join('');
+    
+    d.innerHTML=`
+      <div style="position:relative; width:28px; height:28px; border-radius:50%; overflow:hidden; border:2px solid ${m.color}; flex-shrink:0;">
+         <img src="${m.avatar || ''}" style="width:100%; height:100%; object-fit:cover; display:${m.avatar ? 'block' : 'none'};">
+         <div style="width:100%; height:100%; background:${m.color}; display:${m.avatar ? 'none' : 'block'};"></div>
+         <input type="file" accept="image/*" style="position:absolute; top:0; left:0; opacity:0; width:100%; height:100%; cursor:pointer;" onchange="handleAvatarUpload(event, ${i})">
+      </div>
+      <input type="text" value="${m.name}" style="flex:1;min-width:70px;" onchange="members[${i}].name=this.value;renderS();" />
+      <div style="display:flex;gap:4px;flex-wrap:wrap;">${cols}</div>
+      <button class="btn btn-d" onclick="removeM(${i})" style="padding:4px 8px;"><i class="ti ti-trash"></i></button>`;
+    el.appendChild(d);
+  });
+  buildChatEvents();
+}
+function setCol(i,ci){members[i].color=PAL[ci];renderM();initDisplayState();buildBars();}
+function addM(){const inp=document.getElementById('nm-inp');const n=inp.value.trim()||'Miembro '+(members.length+1);members.push({name:n,color:PAL[members.length%PAL.length],avatar:''});inp.value='';renderM();renderS();initDisplayState();}
+function removeM(i){
+  members.splice(i,1);
+  if(members.length === 0) members.push({name:'Cantante', color:'#7F77DD', avatar:''});
+  segments.forEach(s=>{if(s.memberId>=members.length)s.memberId=0;});
+  renderM();renderS();initDisplayState();
+}
+
+function mopts(sel){return members.map((m,i)=>`<option value="${i}"${i===sel?' selected':''}>${m.name}</option>`).join('');}
+
+function renderS(){
+  const el=document.getElementById('slist');el.innerHTML='';
+  segments.forEach((s,i)=>{
+    const m=members[s.memberId]||members[0];
+    const d=document.createElement('div');
+    d.className = `seg-grid ${activeCapIdx === i ? 'active-cap' : ''}`;
+    d.draggable = true;
+    d.ondragstart = (e) => dStart(e, i); d.ondragover = dOver; d.ondrop = (e) => dDrop(e, i); d.ondragend = dEnd;
+    
+    d.innerHTML=`
+      <div class="drag-handle"><i class="ti ti-grip-vertical"></i></div>
+      <div style="display:flex;justify-content:center;"><input type="radio" name="capRadio" ${activeCapIdx===i?'checked':''} onchange="activeCapIdx=${i};renderS()"></div>
+      <div style="display:flex; gap:2px; align-items:center;">
+        <input type="number" value="${s.start}" min="0" step="0.01" style="width:100%;" onchange="segments[${i}].start=+this.value;buildChatEvents();" />
+        <button class="btn" onclick="captureT(${i}, 'start')" style="padding:4px 6px;"><i class="ti ti-clock"></i></button>
+      </div>
+      <div style="display:flex; gap:2px; align-items:center;">
+        <input type="number" value="${s.end}" min="0" step="0.01" style="width:100%;" onchange="segments[${i}].end=+this.value;buildChatEvents();" />
+        <button class="btn" onclick="captureT(${i}, 'end')" style="padding:4px 6px;"><i class="ti ti-clock"></i></button>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:4px;">
+        <input type="text" placeholder="Letra Principal" value="${s.lyric}" onchange="segments[${i}].lyric=this.value;buildChatEvents();" />
+        <input type="text" placeholder="Traducción (Opcional)" value="${s.translation||''}" onchange="segments[${i}].translation=this.value;buildChatEvents();" />
+      </div>
+      <select onchange="segments[${i}].memberId=+this.value;this.style.borderLeft='3px solid '+(members[+this.value]||members[0]).color;buildChatEvents();" style="border-left:3px solid ${m.color};width:100%;height:100%;">${mopts(s.memberId)}</select>
+      <div style="display:flex; gap:4px;">
+        <button class="btn" onclick="insertS(${i})" style="padding:4px 7px;"><i class="ti ti-plus"></i></button>
+        <button class="btn btn-d" onclick="rmS(${i})" style="padding:4px 7px;"><i class="ti ti-x"></i></button>
+      </div>`;
+    el.appendChild(d);
+  });
+  buildChatEvents();
+}
+
+function addS(){const last=segments[segments.length-1];const st=last?last.end:0;segments.push({start:st,end:st+12,lyric:'Nueva línea...',translation:'',memberId:0});renderS();}
+function insertS(index){
+  const curr = segments[index]; const st = curr ? curr.end : 0;
+  segments.splice(index + 1, 0, { start: st, end: st + 3, lyric: 'Nueva...', translation:'', memberId: curr.memberId });
+  renderS();
+}
+function rmS(i){
+  segments.splice(i,1);
+  if(activeCapIdx >= segments.length) activeCapIdx = Math.max(0, segments.length - 1);
+  renderS();
+}
+function removeAllS(){ if(confirm("¿Seguro que quieres vaciar todo?")) { segments = []; activeCapIdx=0; renderS(); } }
+
+function addBulkLyrics() {
+  const text = document.getElementById('bulk-lyrics').value; if (!text.trim()) return;
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  let lastEnd = segments.length > 0 ? segments[segments.length - 1].end : 0;
+  lines.forEach(line => { segments.push({ start: lastEnd, end: lastEnd + 5, lyric: line, translation:'', memberId: 0 }); lastEnd += 5; });
+  document.getElementById('bulk-lyrics').value = ''; renderS();
+}
+
+function initDisplayState(){ displayWidths=members.map(()=>0); }
+
+function computeTotals(t){
+  const totals=members.map(()=>0);
+  segments.forEach(s=>{
+    if(s.memberId<members.length){
+      const eff=Math.min(s.end,t);
+      if(eff>s.start){
+        const dur = eff - s.start; const m = members[s.memberId];
+        const nameStr = m && m.name ? String(m.name) : '';
+        if(nameStr === 'ALL') { 
+            members.forEach((other, idx) => { 
+                const oName = other && other.name ? String(other.name) : '';
+                if(oName !== 'ALL' && !oName.includes('+')) totals[idx] += dur; 
+            });
+        } else if (nameStr.includes('+')) {
+          const subNames = nameStr.split('+').map(n => n.trim().toLowerCase());
+          members.forEach((other, idx) => { 
+              const oName = other && other.name ? String(other.name).toLowerCase() : '';
+              if (subNames.includes(oName)) totals[idx] += dur; 
+          });
+        } else { totals[s.memberId] += dur; }
+      }
+    }
+  });
+  return totals;
+}
+
+function buildBars(){
+  const c=document.getElementById('bars-container');c.innerHTML='';
+  members.forEach((m,i)=>{
+    const nameStr = m && m.name ? String(m.name) : '';
+    if(nameStr === 'ALL' || nameStr.includes('+')) return; 
+    let avatarHTML = m.avatar 
+       ? `<img src="${m.avatar}" style="width:22px;height:22px;border-radius:50%;object-fit:cover; border:1.5px solid ${m.color}; background:var(--color-background-primary);">` 
+       : '';
+    const row=document.createElement('div');row.className='hbar-row';row.id='hrow-'+i; row.style.order=i;
+    row.innerHTML=`
+      <div class="hbar-name" id="hname-${i}" style="color:${m.color}; display:flex; align-items:center; justify-content:flex-end; gap:6px;">
+        <span>${m.name}</span>${avatarHTML}
+      </div>
+      <div class="hbar-track"><div class="hbar-fill" id="hfill-${i}" style="background:${m.color};transition:width .55s cubic-bezier(.4,0,.2,1);"></div></div>
+      <div class="hbar-secs" id="hsecs-${i}">0.0s</div>`;
+    c.appendChild(row);
+  });
+}
+
+function lerp(a,b,t){return a+(b-a)*t;}
+
+// --- MOTOR DE CHAT E HISTORIAL ---
 function buildChatEvents() {
   chatEvents = [];
   if(!members || members.length === 0) return;
@@ -391,8 +543,8 @@ function buildChatEvents() {
       } else if (nameStr.includes('+')) {
         const subNames = nameStr.split('+').map(n => n.trim().toLowerCase());
         members.forEach((other, idx) => { 
-            const oName = other && other.name ? String(other.name).toLowerCase() : '';
-            if (subNames.includes(oName)) maxEnds[idx] = Math.max(maxEnds[idx]||0, s.end); 
+            const otherName = other && other.name ? String(other.name).toLowerCase() : '';
+            if (subNames.includes(otherName)) maxEnds[idx] = Math.max(maxEnds[idx]||0, s.end); 
         });
       } else {
         if (s.memberId < maxEnds.length) maxEnds[s.memberId] = Math.max(maxEnds[s.memberId]||0, s.end);
@@ -496,142 +648,6 @@ function updateActiveKaraoke(visibleEvents, t) {
   });
 }
 
-function renderM(){
-  const el=document.getElementById('mlist');el.innerHTML='';
-  members.forEach((m,i)=>{
-    const d=document.createElement('div');d.className='card';
-    d.style.cssText='display:flex;gap:8px;align-items:center;padding:.5rem .9rem;';
-    const cols=PAL.map((c,ci)=>`<div class="swatch${m.color===c?' on':''}" style="background:${c}" onclick="setCol(${i},${ci})"></div>`).join('');
-    
-    d.innerHTML=`
-      <div style="position:relative; width:28px; height:28px; border-radius:50%; overflow:hidden; border:2px solid ${m.color}; flex-shrink:0;">
-         <img src="${m.avatar || ''}" style="width:100%; height:100%; object-fit:cover; display:${m.avatar ? 'block' : 'none'};">
-         <div style="width:100%; height:100%; background:${m.color}; display:${m.avatar ? 'none' : 'block'};"></div>
-         <input type="file" accept="image/*" style="position:absolute; top:0; left:0; opacity:0; width:100%; height:100%; cursor:pointer;" onchange="handleAvatarUpload(event, ${i})">
-      </div>
-      <input type="text" value="${m.name}" style="flex:1;min-width:70px;" onchange="members[${i}].name=this.value;renderS();" />
-      <div style="display:flex;gap:4px;flex-wrap:wrap;">${cols}</div>
-      <button class="btn btn-d" onclick="removeM(${i})" style="padding:4px 8px;"><i class="ti ti-trash"></i></button>`;
-    el.appendChild(d);
-  });
-  buildChatEvents();
-}
-
-function setCol(i,ci){members[i].color=PAL[ci];renderM();initDisplayState();buildBars();}
-function addM(){const inp=document.getElementById('nm-inp');const n=inp.value.trim()||'Miembro '+(members.length+1);members.push({name:n,color:PAL[members.length%PAL.length],avatar:''});inp.value='';renderM();renderS();initDisplayState();}
-function removeM(i){
-  members.splice(i,1);
-  if(members.length === 0) members.push({name:'Cantante', color:'#7F77DD', avatar:''});
-  segments.forEach(s=>{if(s.memberId>=members.length)s.memberId=0;});
-  renderM();renderS();initDisplayState();
-}
-
-function mopts(sel){return members.map((m,i)=>`<option value="${i}"${i===sel?' selected':''}>${m.name}</option>`).join('');}
-
-function renderS(){
-  const el=document.getElementById('slist');el.innerHTML='';
-  segments.forEach((s,i)=>{
-    const m=members[s.memberId]||members[0];
-    const d=document.createElement('div');
-    d.className = `seg-grid ${activeCapIdx === i ? 'active-cap' : ''}`;
-    d.draggable = true;
-    d.ondragstart = (e) => dStart(e, i); d.ondragover = dOver; d.ondrop = (e) => dDrop(e, i); d.ondragend = dEnd;
-    
-    d.innerHTML=`
-      <div class="drag-handle"><i class="ti ti-grip-vertical"></i></div>
-      <div style="display:flex;justify-content:center;"><input type="radio" name="capRadio" ${activeCapIdx===i?'checked':''} onchange="activeCapIdx=${i};renderS()"></div>
-      <div style="display:flex; gap:2px; align-items:center;">
-        <input type="number" value="${s.start}" min="0" step="0.01" style="width:100%;" onchange="segments[${i}].start=+this.value;buildChatEvents();" />
-        <button class="btn" onclick="captureT(${i}, 'start')" style="padding:4px 6px;"><i class="ti ti-clock"></i></button>
-      </div>
-      <div style="display:flex; gap:2px; align-items:center;">
-        <input type="number" value="${s.end}" min="0" step="0.01" style="width:100%;" onchange="segments[${i}].end=+this.value;buildChatEvents();" />
-        <button class="btn" onclick="captureT(${i}, 'end')" style="padding:4px 6px;"><i class="ti ti-clock"></i></button>
-      </div>
-      <div style="display:flex; flex-direction:column; gap:4px;">
-        <input type="text" placeholder="Letra Principal" value="${s.lyric}" onchange="segments[${i}].lyric=this.value;buildChatEvents();" />
-        <input type="text" placeholder="Traduccion (Opcional)" value="${s.translation||''}" onchange="segments[${i}].translation=this.value;buildChatEvents();" />
-      </div>
-      <select onchange="segments[${i}].memberId=+this.value;this.style.borderLeft='3px solid '+(members[+this.value]||members[0]).color;buildChatEvents();" style="border-left:3px solid ${m.color};width:100%;height:100%;">${mopts(s.memberId)}</select>
-      <div style="display:flex; gap:4px;">
-        <button class="btn" onclick="insertS(${i})" style="padding:4px 7px;"><i class="ti ti-plus"></i></button>
-        <button class="btn btn-d" onclick="rmS(${i})" style="padding:4px 7px;"><i class="ti ti-x"></i></button>
-      </div>`;
-    el.appendChild(d);
-  });
-  buildChatEvents();
-}
-
-function addS(){const last=segments[segments.length-1];const st=last?last.end:0;segments.push({start:st,end:st+12,lyric:'Nueva linea...',translation:'',memberId:0});renderS();}
-function insertS(index){
-  const curr = segments[index]; const st = curr ? curr.end : 0;
-  segments.splice(index + 1, 0, { start: st, end: st + 3, lyric: 'Nueva...', translation:'', memberId: curr.memberId });
-  renderS();
-}
-function rmS(i){
-  segments.splice(i,1);
-  if(activeCapIdx >= segments.length) activeCapIdx = Math.max(0, segments.length - 1);
-  renderS();
-}
-function removeAllS(){ if(confirm("¿Seguro que quieres vaciar todo?")) { segments = []; activeCapIdx=0; renderS(); } }
-
-function addBulkLyrics() {
-  const text = document.getElementById('bulk-lyrics').value; if (!text.trim()) return;
-  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-  let lastEnd = segments.length > 0 ? segments[segments.length - 1].end : 0;
-  lines.forEach(line => { segments.push({ start: lastEnd, end: lastEnd + 5, lyric: line, translation:'', memberId: 0 }); lastEnd += 5; });
-  document.getElementById('bulk-lyrics').value = ''; renderS();
-}
-
-function initDisplayState(){ displayWidths=members.map(()=>0); }
-
-function computeTotals(t){
-  const totals=members.map(()=>0);
-  segments.forEach(s=>{
-    if(s.memberId<members.length){
-      const eff=Math.min(s.end,t);
-      if(eff>s.start){
-        const dur = eff - s.start; const m = members[s.memberId];
-        const nameStr = m && m.name ? String(m.name) : '';
-        if(nameStr === 'ALL') { 
-            members.forEach((other, idx) => { 
-                const oName = other && other.name ? String(other.name) : '';
-                if(oName !== 'ALL' && !oName.includes('+')) totals[idx] += dur; 
-            });
-        } else if (nameStr.includes('+')) {
-          const subNames = nameStr.split('+').map(n => n.trim().toLowerCase());
-          members.forEach((other, idx) => { 
-              const oName = other && other.name ? String(other.name).toLowerCase() : '';
-              if (subNames.includes(oName)) totals[idx] += dur; 
-          });
-        } else { totals[s.memberId] += dur; }
-      }
-    }
-  });
-  return totals;
-}
-
-function buildBars(){
-  const c=document.getElementById('bars-container');c.innerHTML='';
-  members.forEach((m,i)=>{
-    const nameStr = m && m.name ? String(m.name) : '';
-    if(nameStr === 'ALL' || nameStr.includes('+')) return; 
-    let avatarHTML = m.avatar 
-       ? `<img src="${m.avatar}" style="width:22px;height:22px;border-radius:50%;object-fit:cover; border:1.5px solid ${m.color}; background:var(--color-background-primary);">` 
-       : '';
-    const row=document.createElement('div');row.className='hbar-row';row.id='hrow-'+i; row.style.order=i;
-    row.innerHTML=`
-      <div class="hbar-name" id="hname-${i}" style="color:${m.color}; display:flex; align-items:center; justify-content:flex-end; gap:6px;">
-        <span>${m.name}</span>${avatarHTML}
-      </div>
-      <div class="hbar-track"><div class="hbar-fill" id="hfill-${i}" style="background:${m.color};transition:width .55s cubic-bezier(.4,0,.2,1);"></div></div>
-      <div class="hbar-secs" id="hsecs-${i}">0.0s</div>`;
-    c.appendChild(row);
-  });
-}
-
-function lerp(a,b,t){return a+(b-a)*t;}
-
 function updateAnim(t){
   const dur=+document.getElementById('song-dur').value||200;
   document.getElementById('time-label').textContent=fmt(t)+' / '+fmt(dur);
@@ -692,6 +708,7 @@ function updateAnim(t){
     row.style.order=order.indexOf(i);
   });
 
+  // LOGICA CHAT
   const visibleEvents = chatEvents.filter(e => e.start <= t);
   const eventKey = visibleEvents.map(e => e.type + '_' + (e.idx!==undefined?e.idx:e.members.join(',')) + '_' + e.start).join('|');
   
@@ -704,6 +721,7 @@ function updateAnim(t){
       updateActiveKaraoke(visibleEvents, t);
   }
 
+  // INDICADOR ESCRIBIENDO
   const actives = segments.filter(s => t >= s.start && t < s.end);
   let recentSingers = [];
   if (actives.length > 0) {
@@ -1001,7 +1019,7 @@ function importData(e) {
       document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-play"></i> Play');
       
       renderM(); renderS(); initDisplayState();
-      buildChatEvents();
+      buildChatEvents(); // Vuelve a montar el historial del chat
       
       if(document.getElementById('tab-stats').classList.contains('active')) renderStats();
       if(document.getElementById('tab-animate').classList.contains('active')) { buildBars(); updateAnim(0); }
