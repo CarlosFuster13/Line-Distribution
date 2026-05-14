@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Line Distribution Editor - YouTube Edition</title>
+<title>Line Distribution Editor - YouTube & Chat Edition</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
 <style>
 :root {
@@ -57,13 +57,15 @@ textarea{resize:vertical;padding:8px;}
 .hint{font-size:12px;color:var(--color-text-secondary);margin-top:5px;}
 
 /* Split Layout */
-#split-layout { display: flex; gap: 16px; flex-wrap: wrap; align-items: stretch; margin-bottom: 1rem;}
-#yt-container { flex: 1; min-width: 320px; border-radius: 12px; overflow: hidden; background: #000; border: 1px solid var(--color-border-tertiary); aspect-ratio: 16/9; box-shadow: 0 4px 12px rgba(0,0,0,0.1);}
+#split-layout { display: flex; gap: 16px; height: 65vh; min-height: 500px; margin-bottom: 1rem; align-items: stretch; }
+#left-panel { flex: 1; min-width: 320px; display: flex; flex-direction: column; gap: 16px; }
+#yt-container { flex: 1 1 50%; min-height: 200px; border-radius: 12px; overflow: hidden; background: #000; border: 1px solid var(--color-border-tertiary); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+#anim-wrap { flex: 1 1 50%; position:relative; border-radius:12px; overflow:hidden; border:1px solid var(--color-border-tertiary); display: flex; flex-direction: column;}
+#right-panel { flex: 1; min-width: 320px; position: relative; border-radius: 12px; border: 1px solid var(--color-border-tertiary); overflow: hidden; display: flex; flex-direction: column; }
 
-#anim-wrap{ flex: 1; min-width: 320px; position:relative; border-radius:12px; overflow:hidden; padding:1.25rem; border:1px solid var(--color-border-tertiary);}
-#anim-bg{position:absolute; top:0; left:0; right:0; bottom:0; background-size:cover; background-position:center; z-index:0;}
-#anim-overlay{position:absolute; top:0; left:0; right:0; bottom:0; background:var(--color-background-secondary); z-index:1; transition:background 0.3s;}
-#anim-content{position:relative; z-index:2; height: 100%; display: flex; flex-direction: column;}
+.custom-bg { position:absolute; top:0; left:0; right:0; bottom:0; background-size:cover; background-position:center; z-index:0; }
+.custom-overlay { position:absolute; top:0; left:0; right:0; bottom:0; background:var(--color-background-secondary); z-index:1; transition:background 0.3s; }
+.content-z { position:relative; z-index:2; height:100%; display:flex; flex-direction:column; }
 
 .hbar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px; transition: filter 2s ease, opacity 2s ease;}
 .hbar-name{font-size:13px;font-weight:600;min-width:100px;text-align:right;flex-shrink:0; text-shadow: 0px 1px 3px rgba(0,0,0,0.3);}
@@ -71,8 +73,8 @@ textarea{resize:vertical;padding:8px;}
 .hbar-fill{height:100%;border-radius:4px;width:0%;}
 .hbar-secs{font-size:12px;min-width:38px;text-align:right;flex-shrink:0;color:var(--color-text-primary); font-weight:500;}
 
-#ticker-container{border-top:1px solid var(--color-border-tertiary);padding-top:1rem;margin-top:auto;min-height:90px; display:flex; flex-direction:column; gap:6px;}
-#lyrics-render-area{display:flex; flex-direction:column; gap:8px;}
+#chat-history { flex: 1; padding: 1.25rem; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+#typing-indicator-wrap { padding: 0.75rem 1.25rem; border-top: 1px solid rgba(128,128,128,0.2); min-height: 48px; }
 
 @keyframes typingPulse {
   0% { opacity: 0.7; }
@@ -80,11 +82,21 @@ textarea{resize:vertical;padding:8px;}
   100% { opacity: 0.7; }
 }
 .typing-anim { animation: typingPulse 1.5s infinite ease-in-out; }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 #scrubber-row{display:flex;align-items:center;gap:10px;margin:1rem 0 .75rem;}
 #scrubber{flex:1;}
 #time-label{font-size:13px;color:var(--color-text-secondary);min-width:80px;text-align:right; font-family:monospace;}
 .ctrl-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+
+/* Ocultar barra de scroll para limpieza visual */
+#chat-history::-webkit-scrollbar { width: 6px; }
+#chat-history::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 4px; }
+#bars-container::-webkit-scrollbar { width: 6px; }
+#bars-container::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 4px; }
 </style>
 </head>
 <body>
@@ -114,11 +126,13 @@ textarea{resize:vertical;padding:8px;}
     <input type="text" id="song-title" placeholder="Ej: Mi Cancion Genial" style="width:190px;" /></div>
     <div><label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:3px;">Duracion (s)</label>
     <input type="number" id="song-dur" value="200" min="10" style="width:80px;" /></div>
-    <div style="flex:1; min-width:250px;">
-      <label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:3px;">Enlace de YouTube</label>
+    <div style="flex:1; min-width:320px;">
+      <label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:3px;">Enlace de YouTube y Controles</label>
       <div style="display:flex; gap:8px; align-items:center;">
         <input type="text" id="yt-url" placeholder="https://www.youtube.com/watch?v=... o URL de Shorts" style="flex:1;" />
-        <button class="btn btn-p" onclick="loadYouTubeVideo()"><i class="ti ti-brand-youtube"></i> Cargar Video</button>
+        <button class="btn btn-p" onclick="loadYouTubeVideo()"><i class="ti ti-brand-youtube"></i> Cargar</button>
+        <button class="btn play-toggle-btn" onclick="togglePlay()"><i class="ti ti-player-play"></i> Play</button>
+        <span id="seg-time-display" style="font-family:monospace; font-size:13px; color:var(--color-text-secondary); min-width:45px;">0.00s</span>
       </div>
     </div>
   </div>
@@ -126,7 +140,7 @@ textarea{resize:vertical;padding:8px;}
   <div class="stitle" style="margin-top:1rem;">Generador Rapido de Letra</div>
   <div class="card" style="display:flex;flex-direction:column;gap:8px;">
     <textarea id="bulk-lyrics" rows="3" placeholder="Pega aqui tu letra. Cada linea creara un segmento nuevo con 5 segundos por defecto." style="width:100%;"></textarea>
-    <button class="btn" onclick="addBulkLyrics()" style="align-self:flex-start;"><i class="ti ti-list-check"></i> Generar lineas</button>
+    <button class="btn" onclick="addBulkLyrics()"><i class="ti ti-list-check"></i> Generar lineas</button>
   </div>
 
   <div class="stitle" style="margin-top:1rem; display:flex; justify-content:space-between; align-items:center;">
@@ -155,21 +169,26 @@ textarea{resize:vertical;padding:8px;}
   </div>
 
   <div id="split-layout">
-    <div id="yt-container">
-      <div id="yt-player"></div>
+    <div id="left-panel">
+      <div id="yt-container">
+        <div id="yt-player"></div>
+      </div>
+      <div id="anim-wrap">
+        <div class="custom-bg"></div>
+        <div class="custom-overlay"></div>
+        <div class="content-z" style="padding: 1.25rem;">
+          <div id="bars-container" style="display:flex; flex-direction:column; flex:1; overflow-y:auto; padding-right:8px;"></div>
+        </div>
+      </div>
     </div>
     
-    <div id="anim-wrap">
-      <div id="anim-bg"></div>
-      <div id="anim-overlay"></div>
-      <div id="anim-content">
-        <div id="bars-container" style="display:flex;flex-direction:column;"></div>
-        <div id="ticker-container">
-          <div style="display:flex; justify-content:flex-end;">
-            <span id="ticker-time" style="font-size:12px;color:var(--color-text-secondary);font-family:monospace;background:var(--color-background-secondary);padding:2px 6px;border-radius:4px;opacity:0.8;">0.00s</span>
-          </div>
-          <div id="lyrics-render-area"><span style="color:var(--color-text-secondary);">—</span></div>
-          <div id="typing-indicator" style="font-size:13px; color:var(--color-text-secondary); min-height:18px; margin-top:8px; opacity:0; transition: opacity 0.3s; font-style:italic;"></div>
+    <div id="right-panel">
+      <div class="custom-bg"></div>
+      <div class="custom-overlay"></div>
+      <div class="content-z">
+        <div id="chat-history"></div>
+        <div id="typing-indicator-wrap">
+          <div id="typing-indicator" style="font-size:13px; color:var(--color-text-secondary); min-height:18px; opacity:0; transition: opacity 0.3s; font-style:italic;"></div>
         </div>
       </div>
     </div>
@@ -181,7 +200,7 @@ textarea{resize:vertical;padding:8px;}
   </div>
   
   <div class="ctrl-row">
-    <button class="btn btn-p" id="play-btn" onclick="togglePlay()"><i class="ti ti-player-play"></i> Play</button>
+    <button class="btn btn-p play-toggle-btn" onclick="togglePlay()"><i class="ti ti-player-play"></i> Play</button>
     <button class="btn" onclick="resetAnim()"><i class="ti ti-refresh"></i> Reiniciar</button>
     <select id="speed-sel" onchange="changeSpeed(this.value)" style="font-size:13px;">
       <option value="0.5">0.5×</option>
@@ -223,24 +242,25 @@ let members=[
   {name:'ALL',color:PAL[8], avatar:''}, 
 ];
 let segments=[
-  {start:0,end:5.50,lyric:'Jin starts the song', translation:'Jin empieza la cancion', memberId:0},
-  {start:10.50,end:15.00,lyric:'Suga comes in later', translation:'Suga entra mas tarde', memberId:1}, 
+  {start:0,end:5.50,lyric:'Jin empieza la linea en el chat', translation:'Traduccion', memberId:0},
+  {start:8.00,end:12.00,lyric:'Suga se une despues', translation:'Suga continua', memberId:1}, 
 ];
 
 let playing=false,curTime=0,lastTS=null,animId=null,playSpeed=1;
-let displayWidths=[], displayOrders=[];
+let displayWidths=[];
 let donutAngles=[], donutAnimId=null;
 let activeCapIdx = 0; 
 let projectBg = '';
 let currentVideoId = '';
 
+let chatEvents = [];
+let prevEventKey = '';
+
 // --- YOUTUBE API INTEGRATION ---
 let ytPlayer = null;
 let isYtReady = false;
 
-function onYouTubeIframeAPIReady() {
-  isYtReady = true;
-}
+function onYouTubeIframeAPIReady() { isYtReady = true; }
 
 function extractVideoID(url){
   if (url.length === 11) return url;
@@ -251,25 +271,16 @@ function extractVideoID(url){
 function loadYouTubeVideo() {
   const url = document.getElementById('yt-url').value;
   const vid = extractVideoID(url);
-  if(!vid) {
-    alert("Por favor introduce una URL de YouTube valida.");
-    return;
-  }
-  
+  if(!vid) { alert("Introduce una URL de YouTube valida."); return; }
   currentVideoId = url;
 
   if(ytPlayer) {
     ytPlayer.loadVideoById(vid);
   } else {
     ytPlayer = new YT.Player('yt-player', {
-      height: '100%',
-      width: '100%',
-      videoId: vid,
+      height: '100%', width: '100%', videoId: vid,
       playerVars: { 'playsinline': 1, 'controls': 1, 'disablekb': 0, 'rel': 0 },
-      events: {
-        'onReady': onPlayerReady,
-        'onStateChange': onPlayerStateChange
-      }
+      events: { 'onReady': onPlayerReady, 'onStateChange': onPlayerStateChange }
     });
   }
 }
@@ -281,11 +292,11 @@ function onPlayerReady(event) {
 function onPlayerStateChange(event) {
   if (event.data == YT.PlayerState.PLAYING && !playing) {
     playing = true;
-    document.getElementById('play-btn').innerHTML='<i class="ti ti-player-pause"></i> Pausa';
+    document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-pause"></i> Pausa');
     animId = requestAnimationFrame(loop);
   } else if ((event.data == YT.PlayerState.PAUSED || event.data == YT.PlayerState.ENDED) && playing) {
     playing = false;
-    document.getElementById('play-btn').innerHTML='<i class="ti ti-player-play"></i> Play';
+    document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-play"></i> Play');
     if(animId) cancelAnimationFrame(animId);
   }
 }
@@ -293,10 +304,7 @@ function onPlayerStateChange(event) {
 // --- ATAJOS DE TECLADO ---
 document.addEventListener('keydown', e => {
   if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-  if(e.code === 'Space') { 
-    e.preventDefault(); 
-    togglePlay(); 
-  }
+  if(e.code === 'Space') { e.preventDefault(); togglePlay(); }
   if(e.code === 'KeyI') { e.preventDefault(); if(segments[activeCapIdx]) captureT(activeCapIdx, 'start'); }
   if(e.code === 'KeyO') { 
     e.preventDefault(); 
@@ -309,12 +317,7 @@ document.addEventListener('keydown', e => {
 });
 
 function captureT(index, prop) {
-  let t = 0;
-  if (ytPlayer && ytPlayer.getPlayerState) {
-    t = ytPlayer.getCurrentTime();
-  } else {
-    t = curTime;
-  }
+  let t = (ytPlayer && ytPlayer.getPlayerState) ? ytPlayer.getCurrentTime() : curTime;
   segments[index][prop] = parseFloat(t.toFixed(2)); 
   renderS();
 }
@@ -327,8 +330,8 @@ function changeSpeed(val) {
 // --- UI PRINCIPAL ---
 function applyBg() {
   if(!projectBg) return;
-  document.getElementById('anim-bg').style.backgroundImage = `url(${projectBg})`;
-  document.getElementById('anim-overlay').style.background = 'rgba(0,0,0,0.7)';
+  document.querySelectorAll('.custom-bg').forEach(el => el.style.backgroundImage = `url(${projectBg})`);
+  document.querySelectorAll('.custom-overlay').forEach(el => el.style.background = 'rgba(0,0,0,0.7)');
   document.body.classList.add('dark-theme'); renderStats();
 }
 
@@ -388,7 +391,9 @@ function renderM(){
       <button class="btn btn-d" onclick="removeM(${i})" style="padding:4px 8px;"><i class="ti ti-trash"></i></button>`;
     el.appendChild(d);
   });
+  buildChatEvents();
 }
+
 function setCol(i,ci){members[i].color=PAL[ci];renderM();initDisplayState();buildBars();}
 function addM(){const inp=document.getElementById('nm-inp');const n=inp.value.trim()||'Miembro '+(members.length+1);members.push({name:n,color:PAL[members.length%PAL.length],avatar:''});inp.value='';renderM();renderS();initDisplayState();}
 function removeM(i){members.splice(i,1);segments.forEach(s=>{if(s.memberId>=members.length)s.memberId=0;});renderM();renderS();initDisplayState();}
@@ -416,16 +421,17 @@ function renderS(){
         <button class="btn" onclick="captureT(${i}, 'end')" style="padding:4px 6px;"><i class="ti ti-clock"></i></button>
       </div>
       <div style="display:flex; flex-direction:column; gap:4px;">
-        <input type="text" placeholder="Letra Principal" value="${s.lyric}" onchange="segments[${i}].lyric=this.value;" />
-        <input type="text" placeholder="Traduccion (Opcional)" value="${s.translation||''}" onchange="segments[${i}].translation=this.value;" />
+        <input type="text" placeholder="Letra Principal" value="${s.lyric}" onchange="segments[${i}].lyric=this.value;buildChatEvents();" />
+        <input type="text" placeholder="Traduccion (Opcional)" value="${s.translation||''}" onchange="segments[${i}].translation=this.value;buildChatEvents();" />
       </div>
-      <select onchange="segments[${i}].memberId=+this.value;this.style.borderLeft='3px solid '+(members[+this.value]||members[0]).color;" style="border-left:3px solid ${m.color};width:100%;height:100%;">${mopts(s.memberId)}</select>
+      <select onchange="segments[${i}].memberId=+this.value;this.style.borderLeft='3px solid '+(members[+this.value]||members[0]).color;buildChatEvents();" style="border-left:3px solid ${m.color};width:100%;height:100%;">${mopts(s.memberId)}</select>
       <div style="display:flex; gap:4px;">
         <button class="btn" onclick="insertS(${i})" style="padding:4px 7px;"><i class="ti ti-plus"></i></button>
         <button class="btn btn-d" onclick="rmS(${i})" style="padding:4px 7px;"><i class="ti ti-x"></i></button>
       </div>`;
     el.appendChild(d);
   });
+  buildChatEvents();
 }
 
 function addS(){const last=segments[segments.length-1];const st=last?last.end:0;segments.push({start:st,end:st+12,lyric:'Nueva linea...',translation:'',memberId:0});renderS();}
@@ -489,12 +495,127 @@ function buildBars(){
 
 function lerp(a,b,t){return a+(b-a)*t;}
 
+// --- GESTION DE EVENTOS DE CHAT ---
+function buildChatEvents() {
+  chatEvents = [];
+  let maxEnds = members.map(()=>0);
+  
+  segments.forEach(s => {
+      const m = members[s.memberId];
+      if(m && m.name === 'ALL'){
+      } else if (m && m.name.includes('+')) {
+        const subNames = m.name.split('+').map(n => n.trim().toLowerCase());
+        members.forEach((other, idx) => { if (subNames.includes(other.name.toLowerCase())) maxEnds[idx] = Math.max(maxEnds[idx], s.end); });
+      } else {
+        if (s.memberId < maxEnds.length) maxEnds[s.memberId] = Math.max(maxEnds[s.memberId], s.end);
+      }
+  });
+
+  segments.forEach((s, idx) => {
+      chatEvents.push({ type: 'lyric', start: s.start, end: s.end, act: s, idx: idx });
+  });
+
+  let leavesMap = {};
+  members.forEach((m, i) => {
+      if(m.name !== 'ALL' && !m.name.includes('+') && maxEnds[i] > 0) {
+          if(!leavesMap[maxEnds[i]]) leavesMap[maxEnds[i]] = [];
+          leavesMap[maxEnds[i]].push(i);
+      }
+  });
+
+  Object.keys(leavesMap).forEach(time => {
+      chatEvents.push({ type: 'leave', start: parseFloat(time), members: leavesMap[time] });
+  });
+
+  chatEvents.sort((a,b) => a.start - b.start);
+  prevEventKey = ''; 
+}
+
+function renderChatHistory(visibleEvents, t) {
+  const area = document.getElementById('chat-history');
+  if(!area) return;
+  if(visibleEvents.length === 0) {
+      area.innerHTML = '<div style="text-align:center; color:var(--color-text-secondary); font-size:13px; margin-top:2rem;">El chat esta vacio...</div>';
+      return;
+  }
+
+  let html = '';
+  visibleEvents.forEach(ev => {
+      if(ev.type === 'lyric') {
+          const act = ev.act;
+          const m = members[act.memberId] || members[0];
+          const progress = Math.max(0, Math.min(1, (t - act.start) / (act.end - act.start)));
+          const pct = progress * 100;
+          
+          let bgStyle = '';
+          if (pct >= 100) {
+              bgStyle = `color: ${m.color};`; 
+          } else {
+              const gradient = `linear-gradient(to right, ${m.color} ${Math.max(0, pct - 8)}%, var(--color-text-secondary) ${Math.min(100, pct + 2)}%)`;
+              bgStyle = `background: ${gradient}; -webkit-background-clip: text; -webkit-text-fill-color: transparent; color: transparent;`;
+          }
+
+          let avHTML = m.avatar 
+             ? `<img src="${m.avatar}" style="width:20px;height:20px;border-radius:50%;object-fit:cover; border:1.5px solid ${m.color}">` 
+             : `<div style="width:14px;height:14px;border-radius:50%;background:${m.color};"></div>`;
+
+          let transHtml = act.translation ? `<div style="font-size:13px; color:var(--color-text-secondary); margin-top:2px; font-weight:400;">${act.translation}</div>` : '';
+
+          html += `
+            <div style="margin-bottom: 12px; animation: fadeIn 0.3s ease;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                ${avHTML}
+                <span style="font-size:13px;font-weight:600;color:${m.color};text-transform:uppercase;">${m.name}</span>
+              </div>
+              <div id="lyric-text-${ev.idx}" style="font-size:18px;min-height:24px;letter-spacing:.01em;font-weight:700; display:inline-block; ${bgStyle}">
+                ${act.lyric}
+              </div>
+              ${transHtml}
+            </div>
+          `;
+      } else if (ev.type === 'leave') {
+          let names = ev.members.filter(id => members[id]).map(id => `<span style="color:${members[id].color};font-weight:600;">${members[id].name}</span>`).join(' y ');
+          let verb = ev.members.length > 1 ? 'han salido' : 'ha salido';
+          html += `<div style="text-align:center; font-size:13px; color:var(--color-text-secondary); margin: 16px 0; font-style:italic; animation: fadeIn 0.3s ease;">${names} ${verb} del chat</div>`;
+      }
+  });
+  area.innerHTML = html;
+}
+
+function updateActiveKaraoke(visibleEvents, t) {
+  visibleEvents.forEach(ev => {
+      if(ev.type === 'lyric') {
+          const el = document.getElementById(`lyric-text-${ev.idx}`);
+          if(el) {
+              if(t >= ev.end) {
+                  const m = members[ev.act.memberId] || members[0];
+                  el.style.background = 'none';
+                  el.style.webkitBackgroundClip = 'initial';
+                  el.style.webkitTextFillColor = 'initial';
+                  el.style.color = m.color;
+              } else if (t >= ev.start && t < ev.end) {
+                  const m = members[ev.act.memberId] || members[0];
+                  const progress = Math.max(0, Math.min(1, (t - ev.start) / (ev.end - ev.start)));
+                  const pct = progress * 100;
+                  el.style.background = `linear-gradient(to right, ${m.color} ${Math.max(0, pct - 8)}%, var(--color-text-secondary) ${Math.min(100, pct + 2)}%)`;
+                  el.style.webkitBackgroundClip = 'text';
+                  el.style.webkitTextFillColor = 'transparent';
+                  el.style.color = 'transparent';
+              }
+          }
+      }
+  });
+}
+
 function updateAnim(t){
   const dur=+document.getElementById('song-dur').value||200;
   document.getElementById('time-label').textContent=fmt(t)+' / '+fmt(dur);
   document.getElementById('ticker-time').textContent = t.toFixed(2) + 's';
   document.getElementById('scrubber').max = dur;
   document.getElementById('scrubber').value = t;
+
+  const segTimeDisp = document.getElementById('seg-time-display');
+  if(segTimeDisp) segTimeDisp.textContent = t.toFixed(2) + 's';
 
   const totals=computeTotals(t);
   const validTotals = totals.filter((_, i) => members[i].name !== 'ALL' && !members[i].name.includes('+'));
@@ -536,9 +657,21 @@ function updateAnim(t){
     row.style.order=order.indexOf(i);
   });
 
-  const actives = segments.filter(s => t >= s.start && t < s.end);
-  renderKaraokeLyrics(actives, t);
+  // LOGICA CHAT
+  const visibleEvents = chatEvents.filter(e => e.start <= t);
+  const eventKey = visibleEvents.map(e => e.type + '_' + (e.idx!==undefined?e.idx:e.members.join(',')) + '_' + e.start).join('|');
+  
+  if(eventKey !== prevEventKey) {
+      prevEventKey = eventKey;
+      renderChatHistory(visibleEvents, t);
+      const historyArea = document.getElementById('chat-history');
+      if(historyArea) historyArea.scrollTop = historyArea.scrollHeight;
+  } else {
+      updateActiveKaraoke(visibleEvents, t);
+  }
 
+  // INDICADOR ESCRIBIENDO
+  const actives = segments.filter(s => t >= s.start && t < s.end);
   let recentSingers = [];
   if (actives.length > 0) {
     recentSingers = actives.map(s => s.memberId);
@@ -589,48 +722,6 @@ function updateAnim(t){
   }
 }
 
-function renderKaraokeLyrics(actives, t) {
-  const area = document.getElementById('lyrics-render-area');
-  
-  if(actives.length === 0) {
-    area.innerHTML = '<span style="color:var(--color-text-secondary);">—</span>';
-    return;
-  }
-
-  let html = '';
-  actives.forEach(act => {
-    const m = members[act.memberId] || members[0];
-    const progress = Math.max(0, Math.min(1, (t - act.start) / (act.end - act.start)));
-    const pct = progress * 100;
-
-    const gradient = `linear-gradient(to right, 
-      ${m.color} ${Math.max(0, pct - 8)}%, 
-      var(--color-text-secondary) ${Math.min(100, pct + 2)}%
-    )`;
-
-    let avHTML = m.avatar 
-       ? `<img src="${m.avatar}" style="width:16px;height:16px;border-radius:50%;object-fit:cover; border:1px solid ${m.color}">` 
-       : `<div style="width:10px;height:10px;border-radius:50%;background:${m.color};"></div>`;
-
-    let transHtml = act.translation ? `<div style="font-size:13px; color:var(--color-text-secondary); margin-top:2px; font-weight:400;">${act.translation}</div>` : '';
-
-    html += `
-      <div style="margin-bottom: 6px;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
-          ${avHTML}
-          <span style="font-size:12px;font-weight:600;color:${m.color};text-transform:uppercase;text-shadow:0px 1px 2px rgba(0,0,0,0.4);">${m.name}</span>
-        </div>
-        <div style="font-size:18px;min-height:24px;letter-spacing:.01em;font-weight:700; display:inline-block; background: ${gradient}; -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-          ${act.lyric}
-        </div>
-        ${transHtml}
-      </div>
-    `;
-  });
-
-  area.innerHTML = html;
-}
-
 function loop(ts){
   if(!playing)return;
   
@@ -647,7 +738,9 @@ function loop(ts){
   updateAnim(curTime);
   
   if(curTime>=dur){
-    playing=false; document.getElementById('play-btn').innerHTML='<i class="ti ti-player-play"></i> Play'; lastTS=null;
+    playing=false; 
+    document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-play"></i> Play');
+    lastTS=null;
     if(ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo();
     return;
   }
@@ -658,17 +751,17 @@ function togglePlay(){
   const dur=+document.getElementById('song-dur').value||200;
   if(curTime>=dur)curTime=0;
   playing=!playing;
-  const btn=document.getElementById('play-btn');
   
   if(playing){
-    btn.innerHTML='<i class="ti ti-player-pause"></i> Pausa'; lastTS=null;
+    document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-pause"></i> Pausa');
+    lastTS=null;
     if(ytPlayer && ytPlayer.playVideo) {
        ytPlayer.seekTo(curTime);
        ytPlayer.playVideo();
     }
     animId=requestAnimationFrame(loop);
   } else {
-    btn.innerHTML='<i class="ti ti-player-play"></i> Play';
+    document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-play"></i> Play');
     if(ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo();
     if(animId)cancelAnimationFrame(animId);
   }
@@ -676,7 +769,7 @@ function togglePlay(){
 
 function resetAnim(){
   playing=false;if(animId)cancelAnimationFrame(animId); curTime=0;lastTS=null;
-  document.getElementById('play-btn').innerHTML='<i class="ti ti-player-play"></i> Play';
+  document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-play"></i> Play');
   if(ytPlayer && ytPlayer.pauseVideo) { ytPlayer.pauseVideo(); ytPlayer.seekTo(0); }
   initDisplayState();buildBars();updateAnim(0);
 }
