@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Line Distribution Editor</title>
+<title>Line Distribution Editor - Ultimate Edition</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
 <style>
 :root {
@@ -75,20 +75,25 @@ textarea{resize:vertical;padding:8px;}
 .custom-overlay { position:absolute; top:0; left:0; right:0; bottom:0; background:var(--color-background-secondary); z-index:1; transition:background 0.3s; }
 .content-z { position:relative; z-index:2; height:100%; display:flex; flex-direction:column; overflow:hidden; }
 
-/* BARRAS: Eliminamos transition de width para que JS dibuje a 60fps sin pelear con CSS */
-#bars-container { position: relative; width: 100%; }
+/* BARRAS: Grid dinámico para alinear todo independientemente del texto */
+#bars-container { position: relative; width: 100%; --name-w: 120px; }
 .hbar-row {
   position: absolute;
   left: 0; right: 0; height: 38px;
-  display: flex; align-items: center; gap: 10px;
-  /* Transición más rápida y suave para el cambio de posición (transform) */
+  display: grid;
+  grid-template-columns: var(--name-w) 1fr 38px;
+  gap: 10px; align-items: center;
   transition: transform 0.4s ease-out, filter 1s ease, opacity 1s ease;
 }
-.hbar-name{font-size:13px;font-weight:600;min-width:100px;text-align:right;flex-shrink:0; text-shadow: 0px 1px 3px rgba(0,0,0,0.3);}
-.hbar-track{flex:1;background:var(--color-background-primary);border-radius:6px;height:24px;overflow:hidden;border:0.5px solid var(--color-border-tertiary); box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);}
-/* CERO TRANSICIONES CSS AQUÍ. Puro JS para evitar tirones */
-.hbar-fill{height:100%;border-radius:4px;width:0%;}
-.hbar-secs{font-size:12px;min-width:38px;text-align:right;flex-shrink:0;color:var(--color-text-primary); font-weight:500;}
+.hbar-name {
+  font-size: 13px; font-weight: 600;
+  text-align: right; text-shadow: 0px 1px 3px rgba(0,0,0,0.3);
+  display: flex; justify-content: flex-end; align-items: center; gap: 6px;
+  white-space: normal; line-height: 1.2; word-break: break-word;
+}
+.hbar-track {flex:1;background:var(--color-background-primary);border-radius:6px;height:24px;overflow:hidden;border:0.5px solid var(--color-border-tertiary); box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);}
+.hbar-fill {height:100%;border-radius:4px;width:0%;} 
+.hbar-secs {font-size:12px;text-align:right;flex-shrink:0;color:var(--color-text-primary); font-weight:500;}
 
 /* CHAT Y ANIMACIONES */
 #chat-history { flex: 1; padding: 1.25rem; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; scroll-behavior: smooth; }
@@ -251,7 +256,6 @@ textarea{resize:vertical;padding:8px;}
 if(window.matchMedia('(prefers-color-scheme: dark)').matches) document.body.classList.add('dark-theme');
 function toggleTheme() { document.body.classList.toggle('dark-theme'); renderStats(); }
 
-// 30 Colores disponibles
 const PAL=[
   '#7F77DD','#1D9E75','#D85A30','#D4537E','#378ADD','#639922','#BA7517','#E24B4A','#888780','#985fd4',
   '#F4A261','#2A9D8F','#E76F51','#F4C430','#00B8D9','#D138BF','#88C100','#1F3A93','#FF7F50','#B57EDC',
@@ -265,12 +269,12 @@ let members=[
   {name:'ALL',color:PAL[8], avatar:''}, 
 ];
 let segments=[
-  {start:0,end:5.50,lyric:'Jin starts the song', translation:'Jin empieza la cancion', memberId:0},
-  {start:8.00,end:12.00,lyric:'Suga comes in later', translation:'Suga entra mas tarde', memberId:1}, 
+  {start:0,end:5.50,lyric:'Jin starts the song', translation:'Jin empieza la canción', memberId:0},
+  {start:8.00,end:12.00,lyric:'Suga comes in later', translation:'Suga entra más tarde', memberId:1}, 
 ];
 
 let playing=false,curTime=0,lastTS=null,animId=null,playSpeed=1;
-let displayWidths=[];
+let displayWidths=[], displayOrders=[];
 let donutAngles=[], donutAnimId=null;
 let activeCapIdx = 0; 
 let projectBg = '';
@@ -298,7 +302,7 @@ function loadYouTubeVideo() {
   const url = document.getElementById('yt-url').value;
   const vid = extractVideoID(url);
   if(!vid) {
-    alert("Por favor introduce una URL de YouTube valida.");
+    alert("Por favor introduce una URL de YouTube válida.");
     return;
   }
   
@@ -537,16 +541,34 @@ function computeTotals(t){
 }
 
 function buildBars(){
-  const c=document.getElementById('bars-container');c.innerHTML='';
+  const c = document.getElementById('bars-container');
+  c.innerHTML = '';
+
+  // Calcular el ancho dinamico del nombre mas largo para alineación perfecta
+  let maxW = 80;
+  const dummy = document.createElement('div');
+  dummy.style.cssText = 'position:absolute;visibility:hidden;font-size:13px;font-weight:600;display:inline-block;white-space:nowrap;';
+  document.body.appendChild(dummy);
+
+  members.forEach((m,i)=>{
+    const nameStr = m && m.name ? String(m.name) : '';
+    if(nameStr === 'ALL' || nameStr.includes('+')) return;
+    dummy.textContent = m.name;
+    // Espacio base + tamaño del avatar (aprox 38px si hay foto, 15px si no)
+    maxW = Math.max(maxW, dummy.offsetWidth + (m.avatar ? 38 : 15));
+  });
+  document.body.removeChild(dummy);
+  c.style.setProperty('--name-w', Math.ceil(maxW + 10) + 'px');
+
   members.forEach((m,i)=>{
     const nameStr = m && m.name ? String(m.name) : '';
     if(nameStr === 'ALL' || nameStr.includes('+')) return; 
     let avatarHTML = m.avatar 
-       ? `<img src="${m.avatar}" style="width:22px;height:22px;border-radius:50%;object-fit:cover; border:1.5px solid ${m.color}; background:var(--color-background-primary);">` 
+       ? `<img src="${m.avatar}" style="width:22px;height:22px;border-radius:50%;object-fit:cover; border:1.5px solid ${m.color}; background:var(--color-background-primary); flex-shrink:0;">` 
        : '';
     const row=document.createElement('div');row.className='hbar-row';row.id='hrow-'+i;
     row.innerHTML=`
-      <div class="hbar-name" id="hname-${i}" style="color:${m.color}; display:flex; align-items:center; justify-content:flex-end; gap:6px;">
+      <div class="hbar-name" id="hname-${i}" style="color:${m.color};">
         <span>${m.name}</span>${avatarHTML}
       </div>
       <div class="hbar-track"><div class="hbar-fill" id="hfill-${i}" style="background:${m.color};"></div></div>
@@ -871,6 +893,13 @@ function resetAnim(){
   playing=false;if(animId)cancelAnimationFrame(animId); curTime=0;lastTS=null; prevEventKey='';
   document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-play"></i> Play');
   if(ytPlayer && typeof ytPlayer.pauseVideo === 'function') { ytPlayer.pauseVideo(); ytPlayer.seekTo(0, true); }
+  
+  // Forzar vaciado visual inmediato del chat y estados
+  const historyArea = document.getElementById('chat-history');
+  if(historyArea) historyArea.innerHTML = '<div style="text-align:center; color:var(--color-text-secondary); font-size:13px; margin-top:2rem;">El chat está vacío...</div>';
+  const typingDiv = document.getElementById('typing-indicator');
+  if(typingDiv) { typingDiv.innerHTML = ''; typingDiv.style.opacity = 0; }
+  
   initDisplayState();buildBars();updateAnim(0);
 }
 
