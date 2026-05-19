@@ -30,7 +30,7 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--colo
 .tabs{display:flex;gap:4px;margin-bottom:1rem;}
 .tab{font-size:13px;padding:6px 14px;border-radius:8px;border:0.5px solid var(--color-border-tertiary);background:transparent;color:var(--color-text-secondary);cursor:pointer;}
 .tab.active{background:var(--color-text-primary);color:var(--color-background-primary);border-color:transparent;}
-.panel{display:none;}.panel.active;{display:block;}
+.panel{display:none;}.panel.active{display:block;}
 .card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:.85rem 1rem;margin-bottom:.6rem;}
 .stitle{font-size:12px;font-weight:500;color:var(--color-text-secondary);letter-spacing:.05em;text-transform:uppercase;margin-bottom:.6rem;}
 input[type=text],input[type=number],select,textarea{font-size:13px;border:0.5px solid var(--color-border-secondary);border-radius:8px;padding:5px 9px;background:var(--color-background-secondary);color:var(--color-text-primary);}
@@ -42,7 +42,6 @@ textarea{resize:vertical;padding:8px;}
 .btn-d{color:#E24B4A;border-color:#E24B4A33;}
 .btn-d:hover{background:#FCEBEB;}
 
-/* Grid ajustado */
 .seg-grid {
   display: grid;
   grid-template-columns: 20px 20px 90px 90px 1fr 110px 64px;
@@ -57,7 +56,7 @@ textarea{resize:vertical;padding:8px;}
 .swatch.on{border-color:var(--color-text-primary);}
 .hint{font-size:12px;color:var(--color-text-secondary);margin-top:5px;}
 
-/* Split Layout Avanzado */
+/* Split Layout Avanzado y ajustado a la altura de la pantalla */
 #split-layout { 
   display: flex; 
   gap: 16px; 
@@ -67,43 +66,41 @@ textarea{resize:vertical;padding:8px;}
   align-items: stretch; 
 }
 #left-panel { flex: 1; min-width: 320px; display: flex; flex-direction: column; gap: 16px; }
-
-/* Ajustado contenedor de Youtube a 16:9 estricto para eliminar marcos negros laterales */
-#yt-container { 
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  border-radius: 12px; 
-  overflow: hidden; 
-  background: #000; 
-  border: 1px solid var(--color-border-tertiary); 
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
-}
-#chat-wrap { flex: 1; position:relative; border-radius:12px; overflow:hidden; border:1px solid var(--color-border-tertiary); display: flex; flex-direction: column;}
+#yt-container { flex: 1 1 50%; min-height: 200px; border-radius: 12px; overflow: hidden; background: #000; border: 1px solid var(--color-border-tertiary); box-shadow: 0 4px 12px rgba(0,0,0,0.1); aspect-ratio: 16/9; }
+#chat-wrap { flex: 1 1 50%; position:relative; border-radius:12px; overflow:hidden; border:1px solid var(--color-border-tertiary); display: flex; flex-direction: column;}
 #right-panel { flex: 1; min-width: 320px; position: relative; border-radius: 12px; border: 1px solid var(--color-border-tertiary); overflow: hidden; display: flex; flex-direction: column; }
 
 .custom-bg { position:absolute; top:0; left:0; right:0; bottom:0; background-size:cover; background-position:center; z-index:0; }
-.custom-overlay { position:absolute; top:0; left:0; right:0; bottom:0; background:var(--color-background-secondary); z-index:1; transition:background 0.3s; }
+.custom-overlay { position:absolute; top:0; left:0; right:0; bottom:0; background:transparent; z-index:1; transition:background 0.3s; }
 .content-z { position:relative; z-index:2; height:100%; display:flex; flex-direction:column; overflow:hidden; }
 
-/* BARRAS: Grid dinámico para alinear todo independientemente del texto */
-#bars-container { position: relative; width: 100%; --name-w: 120px; }
+/* Barras Magnéticas: Sistema dinámico con posicionamiento absoluto */
+#bars-container { position: relative; width: 100%; }
 .hbar-row {
   position: absolute;
   left: 0; right: 0; height: 38px;
-  display: grid;
-  grid-template-columns: var(--name-w) 1fr 38px;
-  gap: 10px; align-items: center;
-  transition: transform 0.4s ease-out, filter 1s ease, opacity 1s ease;
+  display: flex; align-items: center; gap: 10px;
+  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), filter 2s ease, opacity 2s ease;
 }
+
+/* AMPLIADO EL ANCHO DEL NOMBRE PARA QUE QUEPAN LARGOS SIN DESCUADRAR LAS BARRAS */
 .hbar-name {
-  font-size: 13px; font-weight: 600;
-  text-align: right; text-shadow: 0px 1px 3px rgba(0,0,0,0.3);
-  display: flex; justify-content: flex-end; align-items: center; gap: 6px;
-  white-space: normal; line-height: 1.2; word-break: break-word;
+  font-size: 13px; 
+  font-weight: 600;
+  min-width: 160px; /* Antes 100px. Ahora caben nombres largos */
+  max-width: 250px;
+  text-align: right;
+  flex-shrink: 0; 
+  text-shadow: 0px 1px 3px rgba(0,0,0,0.3);
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
 }
+
 .hbar-track {flex:1;background:var(--color-background-primary);border-radius:6px;height:24px;overflow:hidden;border:0.5px solid var(--color-border-tertiary); box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);}
-.hbar-fill {height:100%;border-radius:4px;width:0%;} 
-.hbar-secs {font-size:12px;text-align:right;flex-shrink:0;color:var(--color-text-primary); font-weight:500;}
+.hbar-fill {height:100%;border-radius:4px;width:0%; transition: width 0.1s linear;}
+.hbar-secs {font-size:12px;min-width:38px;text-align:right;flex-shrink:0;color:var(--color-text-primary); font-weight:500;}
 
 /* CHAT Y ANIMACIONES */
 #chat-history { flex: 1; padding: 1.25rem; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; scroll-behavior: smooth; }
@@ -174,7 +171,7 @@ body.recording-active #split-layout {
     <div style="flex:1; min-width:250px;">
       <label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:3px;">Enlace de YouTube</label>
       <div style="display:flex; gap:8px; align-items:center;">
-        <input type="text" id="yt-url" placeholder="https://www.youtube.com/watch?v=..." style="flex:1;" />
+        <input type="text" id="yt-url" placeholder="https://www.youtube.com/watch?v=... o URL de Shorts" style="flex:1;" />
         <button class="btn btn-p" onclick="loadYouTubeVideo()"><i class="ti ti-brand-youtube"></i> Cargar Video</button>
       </div>
     </div>
@@ -183,7 +180,7 @@ body.recording-active #split-layout {
   <div class="stitle" style="margin-top:1rem;">Generador Rápido de Letra</div>
   <div class="card" style="display:flex;flex-direction:column;gap:8px;">
     <textarea id="bulk-lyrics" rows="3" placeholder="Pega aquí tu letra. Cada línea creará un segmento nuevo con 5 segundos por defecto." style="width:100%;"></textarea>
-    <button class="btn" onclick="addBulkLyrics()">Generar líneas</button>
+    <button class="btn" onclick="addBulkLyrics()" style="align-self:flex-start;"><i class="ti ti-list-check"></i> Generar líneas</button>
   </div>
 
   <div class="stitle" style="margin-top:1rem; display:flex; justify-content:space-between; align-items:center;">
@@ -278,6 +275,7 @@ body.recording-active #split-layout {
 if(window.matchMedia('(prefers-color-scheme: dark)').matches) document.body.classList.add('dark-theme');
 function toggleTheme() { document.body.classList.toggle('dark-theme'); renderStats(); }
 
+// 30 Colores disponibles
 const PAL=[
   '#7F77DD','#1D9E75','#D85A30','#D4537E','#378ADD','#639922','#BA7517','#E24B4A','#888780','#985fd4',
   '#F4A261','#2A9D8F','#E76F51','#F4C430','#00B8D9','#D138BF','#88C100','#1F3A93','#FF7F50','#B57EDC',
@@ -406,8 +404,10 @@ function changeSpeed(val) {
 function applyBg() {
   if(!projectBg) return;
   document.querySelectorAll('.custom-bg').forEach(el => el.style.backgroundImage = `url(${projectBg})`);
-  document.querySelectorAll('.custom-overlay').forEach(el => el.style.background = 'transparent'); // Corregido: Sin oscurecimiento artificial
-  renderStats(); // Corregido: Ya no fuerza la activación automática del dark-theme
+  // Solución: Dejar la superposición transparente para no oscurecer el fondo
+  document.querySelectorAll('.custom-overlay').forEach(el => el.style.background = 'transparent');
+  // Solución: No forzar el dark theme
+  renderStats(); 
 }
 
 function setBgImage(e) {
@@ -468,7 +468,6 @@ function renderM(){
   });
   buildChatEvents();
 }
-
 function setCol(i,ci){members[i].color=PAL[ci];renderM();initDisplayState();buildBars();}
 function addM(){const inp=document.getElementById('nm-inp');const n=inp.value.trim()||'Miembro '+(members.length+1);members.push({name:n,color:PAL[members.length%PAL.length],avatar:''});inp.value='';renderM();renderS();initDisplayState();}
 function removeM(i){
@@ -567,20 +566,6 @@ function buildBars(){
   const c = document.getElementById('bars-container');
   c.innerHTML = '';
 
-  let maxW = 80;
-  const dummy = document.createElement('div');
-  dummy.style.cssText = 'position:absolute;visibility:hidden;font-size:13px;font-weight:600;display:inline-block;white-space:nowrap;';
-  document.body.appendChild(dummy);
-
-  members.forEach((m,i)=>{
-    const nameStr = m && m.name ? String(m.name) : '';
-    if(nameStr === 'ALL' || nameStr.includes('+')) return;
-    dummy.textContent = m.name;
-    maxW = Math.max(maxW, dummy.offsetWidth + (m.avatar ? 38 : 15));
-  });
-  document.body.removeChild(dummy);
-  c.style.setProperty('--name-w', Math.ceil(maxW + 10) + 'px');
-
   members.forEach((m,i)=>{
     const nameStr = m && m.name ? String(m.name) : '';
     if(nameStr === 'ALL' || nameStr.includes('+')) return; 
@@ -600,7 +585,7 @@ function buildBars(){
 
 function lerp(a,b,t){return a+(b-a)*t;}
 
-// --- MOTOR DEL CHAT ---
+// --- MOTOR DEL CHAT EN INGLÉS ---
 function buildChatEvents() {
   chatEvents = [];
   if(!members || members.length === 0) return;
@@ -771,6 +756,7 @@ function updateAnim(t){
     const nameStr = m && m.name ? String(m.name) : '';
     if(nameStr === 'ALL' || nameStr.includes('+')) return; 
     
+    // Ancho animado por JS (lerp puro sin CSS para evitar tirones)
     const targetWidth = (totals[i]/maxT)*100;
     displayWidths[i]=lerp(displayWidths[i] || 0, targetWidth, 0.08);
     
@@ -913,6 +899,7 @@ function resetAnim(){
   document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-play"></i> Play');
   if(ytPlayer && typeof ytPlayer.pauseVideo === 'function') { ytPlayer.pauseVideo(); ytPlayer.seekTo(0, true); }
   
+  // Vaciado forzado e instantáneo del historial de chat al reiniciar
   const historyArea = document.getElementById('chat-history');
   if(historyArea) historyArea.innerHTML = '<div style="text-align:center; color:var(--color-text-secondary); font-size:13px; margin-top:2rem;">The chat is empty...</div>';
   const typingDiv = document.getElementById('typing-indicator');
@@ -953,8 +940,10 @@ async function recordScreen() {
       alert("No se ha detectado audio. Recuerda marcar 'Compartir audio de la pestaña'.");
     }
 
+    // Activa clase CSS para ocultar menús antes de inicializar la captura
     document.body.classList.add('recording-active');
 
+    // Desactivación del modo limpio cuando el usuario detiene la compartición
     displayStream.getVideoTracks()[0].onended = () => {
       document.body.classList.remove('recording-active');
     };
