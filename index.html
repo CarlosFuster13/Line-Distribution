@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Line Distribution Editor</title>
+<title>Line Distribution Editor - Ultimate Edition</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
 <style>
 :root {
@@ -30,7 +30,7 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--colo
 .tabs{display:flex;gap:4px;margin-bottom:1rem;}
 .tab{font-size:13px;padding:6px 14px;border-radius:8px;border:0.5px solid var(--color-border-tertiary);background:transparent;color:var(--color-text-secondary);cursor:pointer;}
 .tab.active{background:var(--color-text-primary);color:var(--color-background-primary);border-color:transparent;}
-.panel{display:none;}.panel.active{display:block;}
+.panel{display:none;}.panel.active;{display:block;}
 .card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:.85rem 1rem;margin-bottom:.6rem;}
 .stitle{font-size:12px;font-weight:500;color:var(--color-text-secondary);letter-spacing:.05em;text-transform:uppercase;margin-bottom:.6rem;}
 input[type=text],input[type=number],select,textarea{font-size:13px;border:0.5px solid var(--color-border-secondary);border-radius:8px;padding:5px 9px;background:var(--color-background-secondary);color:var(--color-text-primary);}
@@ -57,7 +57,7 @@ textarea{resize:vertical;padding:8px;}
 .swatch.on{border-color:var(--color-text-primary);}
 .hint{font-size:12px;color:var(--color-text-secondary);margin-top:5px;}
 
-/* Split Layout Avanzado y ajustado a la altura de la pantalla */
+/* Split Layout Avanzado */
 #split-layout { 
   display: flex; 
   gap: 16px; 
@@ -68,7 +68,7 @@ textarea{resize:vertical;padding:8px;}
 }
 #left-panel { flex: 1; min-width: 320px; display: flex; flex-direction: column; gap: 16px; }
 
-/* Contenedor de Youtube a 16:9 estricto para eliminar marcos negros laterales */
+/* Ajustado contenedor de Youtube a 16:9 estricto para eliminar marcos negros laterales */
 #yt-container { 
   width: 100%;
   aspect-ratio: 16 / 9;
@@ -174,7 +174,7 @@ body.recording-active #split-layout {
     <div style="flex:1; min-width:250px;">
       <label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:3px;">Enlace de YouTube</label>
       <div style="display:flex; gap:8px; align-items:center;">
-        <input type="text" id="yt-url" placeholder="https://www.youtube.com/watch?v=... o URL de Shorts" style="flex:1;" />
+        <input type="text" id="yt-url" placeholder="https://www.youtube.com/watch?v=..." style="flex:1;" />
         <button class="btn btn-p" onclick="loadYouTubeVideo()"><i class="ti ti-brand-youtube"></i> Cargar Video</button>
       </div>
     </div>
@@ -183,7 +183,7 @@ body.recording-active #split-layout {
   <div class="stitle" style="margin-top:1rem;">Generador Rápido de Letra</div>
   <div class="card" style="display:flex;flex-direction:column;gap:8px;">
     <textarea id="bulk-lyrics" rows="3" placeholder="Pega aquí tu letra. Cada línea creará un segmento nuevo con 5 segundos por defecto." style="width:100%;"></textarea>
-    <button class="btn" onclick="addBulkLyrics()" style="align-self:flex-start;"><i class="ti ti-list-check"></i> Generar líneas</button>
+    <button class="btn" onclick="addBulkLyrics()">Generar líneas</button>
   </div>
 
   <div class="stitle" style="margin-top:1rem; display:flex; justify-content:space-between; align-items:center;">
@@ -406,8 +406,8 @@ function changeSpeed(val) {
 function applyBg() {
   if(!projectBg) return;
   document.querySelectorAll('.custom-bg').forEach(el => el.style.backgroundImage = `url(${projectBg})`);
-  document.querySelectorAll('.custom-overlay').forEach(el => el.style.background = 'rgba(0,0,0,0.7)');
-  document.body.classList.add('dark-theme'); renderStats();
+  document.querySelectorAll('.custom-overlay').forEach(el => el.style.background = 'transparent'); // Corregido: Sin oscurecimiento artificial
+  renderStats(); // Corregido: Ya no fuerza la activación automática del dark-theme
 }
 
 function setBgImage(e) {
@@ -448,7 +448,6 @@ function sw(name){
 
 function fmt(s){ const m=Math.floor(s/60), sc=Math.floor(s%60); return m+':'+(sc<10?'0':'')+sc; }
 
-// --- RENDERIZADO DE LAS PESTAÑAS OCULTAS ---
 function renderM(){
   const el=document.getElementById('mlist');el.innerHTML='';
   members.forEach((m,i)=>{
@@ -564,7 +563,6 @@ function computeTotals(t){
   return totals;
 }
 
-// --- ALINEACIÓN DINÁMICA DE BARRAS ---
 function buildBars(){
   const c = document.getElementById('bars-container');
   c.innerHTML = '';
@@ -602,7 +600,7 @@ function buildBars(){
 
 function lerp(a,b,t){return a+(b-a)*t;}
 
-// --- MOTOR DEL CHAT EN INGLÉS ---
+// --- MOTOR DEL CHAT ---
 function buildChatEvents() {
   chatEvents = [];
   if(!members || members.length === 0) return;
@@ -773,7 +771,6 @@ function updateAnim(t){
     const nameStr = m && m.name ? String(m.name) : '';
     if(nameStr === 'ALL' || nameStr.includes('+')) return; 
     
-    // Ancho animado por JS (lerp puro sin CSS para evitar tirones)
     const targetWidth = (totals[i]/maxT)*100;
     displayWidths[i]=lerp(displayWidths[i] || 0, targetWidth, 0.08);
     
@@ -956,10 +953,8 @@ async function recordScreen() {
       alert("No se ha detectado audio. Recuerda marcar 'Compartir audio de la pestaña'.");
     }
 
-    // Activa clase CSS para ocultar menús antes de inicializar la captura
     document.body.classList.add('recording-active');
 
-    // Desactivación del modo limpio cuando el usuario detiene la compartición
     displayStream.getVideoTracks()[0].onended = () => {
       document.body.classList.remove('recording-active');
     };
@@ -997,9 +992,11 @@ async function recordScreen() {
       document.body.classList.remove('recording-active');
       const songTitle = document.getElementById('song-title').value.trim();
       const fileName = songTitle ? songTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '_video.webm' : 'line_distribution_video.webm';
-      const blob = new Blob(chunks, { type: 'video/webm' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a'); a.href = url; a.download = fileName; a.click();
+      const blob = chunks.length > 0 ? new Blob(chunks, { type: 'video/webm' }) : null;
+      if (blob) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = fileName; a.click();
+      }
       displayStream.getTracks().forEach(t => t.stop());
     };
     recorder.start();
