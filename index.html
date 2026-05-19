@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Line Distribution Editor - Ultimate Edition</title>
+<title>Line Distribution Editor</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
 <style>
 :root {
@@ -42,6 +42,7 @@ textarea{resize:vertical;padding:8px;}
 .btn-d{color:#E24B4A;border-color:#E24B4A33;}
 .btn-d:hover{background:#FCEBEB;}
 
+/* Grid ajustado */
 .seg-grid {
   display: grid;
   grid-template-columns: 20px 20px 90px 90px 1fr 110px 64px;
@@ -66,15 +67,15 @@ textarea{resize:vertical;padding:8px;}
   align-items: stretch; 
 }
 #left-panel { flex: 1; min-width: 320px; display: flex; flex-direction: column; gap: 16px; }
-#yt-container { flex: 1 1 50%; min-height: 200px; border-radius: 12px; overflow: hidden; background: #000; border: 1px solid var(--color-border-tertiary); box-shadow: 0 4px 12px rgba(0,0,0,0.1); aspect-ratio: 16/9; }
+#yt-container { flex: 1 1 50%; min-height: 200px; border-radius: 12px; overflow: hidden; background: #000; border: 1px solid var(--color-border-tertiary); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
 #chat-wrap { flex: 1 1 50%; position:relative; border-radius:12px; overflow:hidden; border:1px solid var(--color-border-tertiary); display: flex; flex-direction: column;}
 #right-panel { flex: 1; min-width: 320px; position: relative; border-radius: 12px; border: 1px solid var(--color-border-tertiary); overflow: hidden; display: flex; flex-direction: column; }
 
 .custom-bg { position:absolute; top:0; left:0; right:0; bottom:0; background-size:cover; background-position:center; z-index:0; }
-.custom-overlay { position:absolute; top:0; left:0; right:0; bottom:0; background:transparent; z-index:1; transition:background 0.3s; }
+.custom-overlay { position:absolute; top:0; left:0; right:0; bottom:0; background:var(--color-background-secondary); z-index:1; transition:background 0.3s; }
 .content-z { position:relative; z-index:2; height:100%; display:flex; flex-direction:column; overflow:hidden; }
 
-/* Barras Magnéticas: Sistema dinámico con posicionamiento absoluto */
+/* Barras Magnéticas: Sistema dinámico con posicionamiento absoluto y transición suave */
 #bars-container { position: relative; width: 100%; }
 .hbar-row {
   position: absolute;
@@ -82,25 +83,10 @@ textarea{resize:vertical;padding:8px;}
   display: flex; align-items: center; gap: 10px;
   transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), filter 2s ease, opacity 2s ease;
 }
-
-/* AMPLIADO EL ANCHO DEL NOMBRE PARA QUE QUEPAN LARGOS SIN DESCUADRAR LAS BARRAS */
-.hbar-name {
-  font-size: 13px; 
-  font-weight: 600;
-  min-width: 160px; /* Antes 100px. Ahora caben nombres largos */
-  max-width: 250px;
-  text-align: right;
-  flex-shrink: 0; 
-  text-shadow: 0px 1px 3px rgba(0,0,0,0.3);
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 6px;
-}
-
-.hbar-track {flex:1;background:var(--color-background-primary);border-radius:6px;height:24px;overflow:hidden;border:0.5px solid var(--color-border-tertiary); box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);}
-.hbar-fill {height:100%;border-radius:4px;width:0%; transition: width 0.1s linear;}
-.hbar-secs {font-size:12px;min-width:38px;text-align:right;flex-shrink:0;color:var(--color-text-primary); font-weight:500;}
+.hbar-name{font-size:13px;font-weight:600;min-width:100px;text-align:right;flex-shrink:0; text-shadow: 0px 1px 3px rgba(0,0,0,0.3);}
+.hbar-track{flex:1;background:var(--color-background-primary);border-radius:6px;height:24px;overflow:hidden;border:0.5px solid var(--color-border-tertiary); box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);}
+.hbar-fill{height:100%;border-radius:4px;width:0%; transition: width 0.1s linear;}
+.hbar-secs{font-size:12px;min-width:38px;text-align:right;flex-shrink:0;color:var(--color-text-primary); font-weight:500;}
 
 /* CHAT Y ANIMACIONES */
 #chat-history { flex: 1; padding: 1.25rem; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; scroll-behavior: smooth; }
@@ -127,18 +113,6 @@ textarea{resize:vertical;padding:8px;}
 #chat-history::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 4px; }
 #right-panel .content-z::-webkit-scrollbar { width: 6px; }
 #right-panel .content-z::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 4px; }
-
-/* Ocultar menús al grabar pantalla */
-body.recording-active .tabs,
-body.recording-active #tab-animate > div:first-child,
-body.recording-active #scrubber-row,
-body.recording-active .ctrl-row {
-  display: none !important;
-}
-body.recording-active #split-layout {
-  height: 100vh !important;
-  margin: 0 !important;
-}
 </style>
 </head>
 <body>
@@ -171,7 +145,7 @@ body.recording-active #split-layout {
     <div style="flex:1; min-width:250px;">
       <label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:3px;">Enlace de YouTube</label>
       <div style="display:flex; gap:8px; align-items:center;">
-        <input type="text" id="yt-url" placeholder="https://www.youtube.com/watch?v=... o URL de Shorts" style="flex:1;" />
+        <input type="text" id="yt-url" placeholder="https://www.youtube.com/watch?v=..." style="flex:1;" />
         <button class="btn btn-p" onclick="loadYouTubeVideo()"><i class="ti ti-brand-youtube"></i> Cargar Video</button>
       </div>
     </div>
@@ -289,8 +263,8 @@ let members=[
   {name:'ALL',color:PAL[8], avatar:''}, 
 ];
 let segments=[
-  {start:0,end:5.50,lyric:'Jin starts the song', translation:'Jin empieza la canción', memberId:0},
-  {start:8.00,end:12.00,lyric:'Suga comes in later', translation:'Suga entra más tarde', memberId:1}, 
+  {start:0,end:5.50,lyric:'Jin starts the song', translation:'Jin empieza la cancion', memberId:0},
+  {start:8.00,end:12.00,lyric:'Suga comes in later', translation:'Suga entra mas tarde', memberId:1}, 
 ];
 
 let playing=false,curTime=0,lastTS=null,animId=null,playSpeed=1;
@@ -322,7 +296,7 @@ function loadYouTubeVideo() {
   const url = document.getElementById('yt-url').value;
   const vid = extractVideoID(url);
   if(!vid) {
-    alert("Por favor introduce una URL de YouTube válida.");
+    alert("Por favor introduce una URL de YouTube valida.");
     return;
   }
   
@@ -404,10 +378,8 @@ function changeSpeed(val) {
 function applyBg() {
   if(!projectBg) return;
   document.querySelectorAll('.custom-bg').forEach(el => el.style.backgroundImage = `url(${projectBg})`);
-  // Solución: Dejar la superposición transparente para no oscurecer el fondo
-  document.querySelectorAll('.custom-overlay').forEach(el => el.style.background = 'transparent');
-  // Solución: No forzar el dark theme
-  renderStats(); 
+  document.querySelectorAll('.custom-overlay').forEach(el => el.style.background = 'rgba(0,0,0,0.7)');
+  document.body.classList.add('dark-theme'); renderStats();
 }
 
 function setBgImage(e) {
@@ -563,18 +535,16 @@ function computeTotals(t){
 }
 
 function buildBars(){
-  const c = document.getElementById('bars-container');
-  c.innerHTML = '';
-
+  const c=document.getElementById('bars-container');c.innerHTML='';
   members.forEach((m,i)=>{
     const nameStr = m && m.name ? String(m.name) : '';
     if(nameStr === 'ALL' || nameStr.includes('+')) return; 
     let avatarHTML = m.avatar 
-       ? `<img src="${m.avatar}" style="width:22px;height:22px;border-radius:50%;object-fit:cover; border:1.5px solid ${m.color}; background:var(--color-background-primary); flex-shrink:0;">` 
+       ? `<img src="${m.avatar}" style="width:22px;height:22px;border-radius:50%;object-fit:cover; border:1.5px solid ${m.color}; background:var(--color-background-primary);">` 
        : '';
     const row=document.createElement('div');row.className='hbar-row';row.id='hrow-'+i;
     row.innerHTML=`
-      <div class="hbar-name" id="hname-${i}" style="color:${m.color};">
+      <div class="hbar-name" id="hname-${i}" style="color:${m.color}; display:flex; align-items:center; justify-content:flex-end; gap:6px;">
         <span>${m.name}</span>${avatarHTML}
       </div>
       <div class="hbar-track"><div class="hbar-fill" id="hfill-${i}" style="background:${m.color};"></div></div>
@@ -585,7 +555,7 @@ function buildBars(){
 
 function lerp(a,b,t){return a+(b-a)*t;}
 
-// --- MOTOR DEL CHAT EN INGLÉS ---
+// --- MOTOR DEL CHAT ---
 function buildChatEvents() {
   chatEvents = [];
   if(!members || members.length === 0) return;
@@ -631,7 +601,7 @@ function renderChatHistory(visibleEvents, t) {
   const area = document.getElementById('chat-history');
   if(!area) return;
   if(visibleEvents.length === 0) {
-      area.innerHTML = '<div style="text-align:center; color:var(--color-text-secondary); font-size:13px; margin-top:2rem;">The chat is empty...</div>';
+      area.innerHTML = '<div style="text-align:center; color:var(--color-text-secondary); font-size:13px; margin-top:2rem;">El chat está vacío...</div>';
       return;
   }
 
@@ -673,9 +643,9 @@ function renderChatHistory(visibleEvents, t) {
             </div>
           `;
       } else if (ev.type === 'leave') {
-          let names = ev.members.filter(id => members[id]).map(id => `<span style="color:${members[id].color};font-weight:600;">${members[id].name}</span>`).join(' and ');
-          let verb = ev.members.length > 1 ? 'have left the chat' : 'left the chat';
-          html += `<div style="text-align:center; font-size:13px; color:var(--color-text-secondary); margin: 16px 0; font-style:italic; ${animStyle}">${names} ${verb}</div>`;
+          let names = ev.members.filter(id => members[id]).map(id => `<span style="color:${members[id].color};font-weight:600;">${members[id].name}</span>`).join(' y ');
+          let verb = ev.members.length > 1 ? 'han salido' : 'ha salido';
+          html += `<div style="text-align:center; font-size:13px; color:var(--color-text-secondary); margin: 16px 0; font-style:italic; ${animStyle}">${names} ${verb} del chat</div>`;
       }
   });
   area.innerHTML = html;
@@ -719,14 +689,12 @@ function updateAnim(t){
 
   const totals=computeTotals(t);
   
-  const finalTotals = computeTotals(dur);
-  const validFinalTotals = finalTotals.filter((_, i) => {
+  const validTotals = totals.filter((_, i) => {
       const n = members[i] && members[i].name ? String(members[i].name) : '';
       return n !== 'ALL' && !n.includes('+');
   });
-  const finalMax = validFinalTotals.length > 0 ? Math.max(...validFinalTotals) : 0;
-  const maxT = Math.max(finalMax, 1);
-  
+  const maxTotal = validTotals.length > 0 ? Math.max(...validTotals) : 0;
+  const maxT = Math.max(maxTotal, 1);
   const order=[...members.map((_,i)=>i)].sort((a,b)=>totals[b]-totals[a]);
 
   let maxEnds = members.map(()=>0);
@@ -755,10 +723,8 @@ function updateAnim(t){
   members.forEach((m,i)=>{
     const nameStr = m && m.name ? String(m.name) : '';
     if(nameStr === 'ALL' || nameStr.includes('+')) return; 
-    
-    // Ancho animado por JS (lerp puro sin CSS para evitar tirones)
     const targetWidth = (totals[i]/maxT)*100;
-    displayWidths[i]=lerp(displayWidths[i] || 0, targetWidth, 0.08);
+    displayWidths[i]=lerp(displayWidths[i] || 0, targetWidth, 0.09);
     
     const fill=document.getElementById('hfill-'+i), secs=document.getElementById('hsecs-'+i), row=document.getElementById('hrow-'+i);
     if(!fill || !secs || !row) return;
@@ -817,7 +783,7 @@ function updateAnim(t){
         const nameStr = m && m.name ? String(m.name) : '';
         let displayName = nameStr;
         if (nameStr === 'ALL') {
-           displayName = 'Everyone'; numPeople += 2;
+           displayName = 'Todos'; numPeople += 2;
         } else if (nameStr.includes('+')) {
            numPeople += nameStr.split('+').length;
         } else {
@@ -826,8 +792,8 @@ function updateAnim(t){
         return `<span style="color:${m.color}; font-weight:600;">${displayName}</span>`;
       }).join(', ');
       
-      const verb = numPeople > 1 ? 'are typing...' : 'is typing...';
-      typingHTML = `<span class="typing-anim">${namesHTML} ${verb}</span>`;
+      const verb = numPeople > 1 ? 'están' : 'está';
+      typingHTML = `<span class="typing-anim">${namesHTML} ${verb} escribiendo...</span>`;
     }
   }
 
@@ -842,21 +808,15 @@ function updateAnim(t){
   }
 }
 
-// Sincronización suave con YouTube
 function loop(ts){
   if(!playing)return;
   
-  if(!lastTS) lastTS = ts;
-  const dt = (ts - lastTS) / 1000 * playSpeed;
-  lastTS = ts;
-
-  curTime += dt;
-
-  if (ytPlayer && typeof ytPlayer.getPlayerState === 'function' && ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) {
-      let ytTime = ytPlayer.getCurrentTime();
-      if (Math.abs(curTime - ytTime) > 0.5) {
-          curTime = ytTime;
-      }
+  if(ytPlayer && typeof ytPlayer.getPlayerState === 'function' && ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) {
+    curTime = ytPlayer.getCurrentTime();
+  } else {
+    if(lastTS===null)lastTS=ts;
+    const dt=(ts-lastTS)/1000*playSpeed;lastTS=ts;
+    curTime += dt;
   }
   
   const dur=+document.getElementById('song-dur').value||200;
@@ -898,13 +858,6 @@ function resetAnim(){
   playing=false;if(animId)cancelAnimationFrame(animId); curTime=0;lastTS=null; prevEventKey='';
   document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-play"></i> Play');
   if(ytPlayer && typeof ytPlayer.pauseVideo === 'function') { ytPlayer.pauseVideo(); ytPlayer.seekTo(0, true); }
-  
-  // Vaciado forzado e instantáneo del historial de chat al reiniciar
-  const historyArea = document.getElementById('chat-history');
-  if(historyArea) historyArea.innerHTML = '<div style="text-align:center; color:var(--color-text-secondary); font-size:13px; margin-top:2rem;">The chat is empty...</div>';
-  const typingDiv = document.getElementById('typing-indicator');
-  if(typingDiv) { typingDiv.innerHTML = ''; typingDiv.style.opacity = 0; }
-  
   initDisplayState();buildBars();updateAnim(0);
 }
 
@@ -918,7 +871,7 @@ function scrub(v){
 
 async function recordScreen() {
   try {
-    alert("NOTA IMPORTANTE:\n\n1. En la ventana emergente, elige la opción 'Pestaña de Chrome' (NO 'Ventana' ni 'Toda la pantalla') para que la grabación sea limpia.\n2. Asegúrate de activar 'Compartir audio de la pestaña'.");
+    alert("NOTA IMPORTANTE:\n\n1. En la ventana emergente, elige la opción 'Pestaña de Chrome' (NO 'Ventana' ni 'Toda la pantalla').\n2. Asegúrate de activar 'Compartir audio de la pestaña'.");
     
     const displayStream = await navigator.mediaDevices.getDisplayMedia({ 
       video: { 
@@ -939,14 +892,6 @@ async function recordScreen() {
     if (displayStream.getAudioTracks().length === 0) {
       alert("No se ha detectado audio. Recuerda marcar 'Compartir audio de la pestaña'.");
     }
-
-    // Activa clase CSS para ocultar menús antes de inicializar la captura
-    document.body.classList.add('recording-active');
-
-    // Desactivación del modo limpio cuando el usuario detiene la compartición
-    displayStream.getVideoTracks()[0].onended = () => {
-      document.body.classList.remove('recording-active');
-    };
 
     const tracks = [...displayStream.getVideoTracks()];
 
@@ -978,21 +923,15 @@ async function recordScreen() {
     
     recorder.ondataavailable = e => { if(e.data.size > 0) chunks.push(e.data); };
     recorder.onstop = () => {
-      document.body.classList.remove('recording-active');
       const songTitle = document.getElementById('song-title').value.trim();
       const fileName = songTitle ? songTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '_video.webm' : 'line_distribution_video.webm';
-      const blob = chunks.length > 0 ? new Blob(chunks, { type: 'video/webm' }) : null;
-      if (blob) {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a'); a.href = url; a.download = fileName; a.click();
-      }
+      const blob = new Blob(chunks, { type: 'video/webm' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = fileName; a.click();
       displayStream.getTracks().forEach(t => t.stop());
     };
     recorder.start();
-  } catch (err) { 
-    document.body.classList.remove('recording-active');
-    console.error(err); 
-  }
+  } catch (err) { console.error(err); }
 }
 
 function renderStats(){
