@@ -57,7 +57,7 @@ textarea{resize:vertical;padding:8px;}
 .swatch.on{border-color:var(--color-text-primary);}
 .hint{font-size:12px;color:var(--color-text-secondary);margin-top:5px;}
 
-/* Split Layout Avanzado */
+/* Split Layout Avanzado y ajustado a la altura de la pantalla */
 #split-layout { 
   display: flex; 
   gap: 16px; 
@@ -68,7 +68,7 @@ textarea{resize:vertical;padding:8px;}
 }
 #left-panel { flex: 1; min-width: 320px; display: flex; flex-direction: column; gap: 16px; }
 
-/* Ajustado contenedor de Youtube a 16:9 estricto para eliminar marcos negros laterales */
+/* Contenedor de Youtube a 16:9 estricto para eliminar marcos negros laterales */
 #yt-container { 
   width: 100%;
   aspect-ratio: 16 / 9;
@@ -131,7 +131,7 @@ textarea{resize:vertical;padding:8px;}
 #right-panel .content-z::-webkit-scrollbar { width: 6px; }
 #right-panel .content-z::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 4px; }
 
-/* CSS Ocultar menús e interfaz sobrante durante el modo de grabación limpia */
+/* Ocultar menús al grabar pantalla */
 body.recording-active .tabs,
 body.recording-active #tab-animate > div:first-child,
 body.recording-active #scrubber-row,
@@ -174,7 +174,7 @@ body.recording-active #split-layout {
     <div style="flex:1; min-width:250px;">
       <label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:3px;">Enlace de YouTube</label>
       <div style="display:flex; gap:8px; align-items:center;">
-        <input type="text" id="yt-url" placeholder="https://www.youtube.com/watch?v=..." style="flex:1;" />
+        <input type="text" id="yt-url" placeholder="https://www.youtube.com/watch?v=... o URL de Shorts" style="flex:1;" />
         <button class="btn btn-p" onclick="loadYouTubeVideo()"><i class="ti ti-brand-youtube"></i> Cargar Video</button>
       </div>
     </div>
@@ -446,9 +446,125 @@ function sw(name){
   if(name==='stats')renderStats();
 }
 
-// --- ALINEACIÓN DINÁMICA DE NOMBRES ---
 function fmt(s){ const m=Math.floor(s/60), sc=Math.floor(s%60); return m+':'+(sc<10?'0':'')+sc; }
 
+// --- RENDERIZADO DE LAS PESTAÑAS OCULTAS ---
+function renderM(){
+  const el=document.getElementById('mlist');el.innerHTML='';
+  members.forEach((m,i)=>{
+    const d=document.createElement('div');d.className='card';
+    d.style.cssText='display:flex;gap:8px;align-items:center;padding:.5rem .9rem;';
+    const cols=PAL.map((c,ci)=>`<div class="swatch${m.color===c?' on':''}" style="background:${c}" onclick="setCol(${i},${ci})"></div>`).join('');
+    
+    d.innerHTML=`
+      <div style="position:relative; width:28px; height:28px; border-radius:50%; overflow:hidden; border:2px solid ${m.color}; flex-shrink:0;" title="Click para subir foto">
+         <img src="${m.avatar || ''}" style="width:100%; height:100%; object-fit:cover; display:${m.avatar ? 'block' : 'none'};">
+         <div style="width:100%; height:100%; background:${m.color}; display:${m.avatar ? 'none' : 'block'};"></div>
+         <input type="file" accept="image/*" style="position:absolute; top:0; left:0; opacity:0; width:100%; height:100%; cursor:pointer;" onchange="handleAvatarUpload(event, ${i})">
+      </div>
+      <input type="text" value="${m.name}" style="flex:1;min-width:70px;" onchange="members[${i}].name=this.value;renderS();" />
+      <div style="display:flex;gap:4px;flex-wrap:wrap;">${cols}</div>
+      <button class="btn btn-d" onclick="removeM(${i})" style="padding:4px 8px;"><i class="ti ti-trash"></i></button>`;
+    el.appendChild(d);
+  });
+  buildChatEvents();
+}
+
+function setCol(i,ci){members[i].color=PAL[ci];renderM();initDisplayState();buildBars();}
+function addM(){const inp=document.getElementById('nm-inp');const n=inp.value.trim()||'Miembro '+(members.length+1);members.push({name:n,color:PAL[members.length%PAL.length],avatar:''});inp.value='';renderM();renderS();initDisplayState();}
+function removeM(i){
+  members.splice(i,1);
+  if(members.length === 0) members.push({name:'Cantante', color:'#7F77DD', avatar:''});
+  segments.forEach(s=>{if(s.memberId>=members.length)s.memberId=0;});
+  renderM();renderS();initDisplayState();
+}
+
+function mopts(sel){return members.map((m,i)=>`<option value="${i}"${i===sel?' selected':''}>${m.name}</option>`).join('');}
+
+function renderS(){
+  const el=document.getElementById('slist');el.innerHTML='';
+  segments.forEach((s,i)=>{
+    const m=members[s.memberId]||members[0];
+    const d=document.createElement('div');
+    d.className = `seg-grid ${activeCapIdx === i ? 'active-cap' : ''}`;
+    d.draggable = true;
+    d.ondragstart = (e) => dStart(e, i); d.ondragover = dOver; d.ondrop = (e) => dDrop(e, i); d.ondragend = dEnd;
+    
+    d.innerHTML=`
+      <div class="drag-handle"><i class="ti ti-grip-vertical"></i></div>
+      <div style="display:flex;justify-content:center;"><input type="radio" name="capRadio" ${activeCapIdx===i?'checked':''} onchange="activeCapIdx=${i};renderS()"></div>
+      <div style="display:flex; gap:2px; align-items:center;">
+        <input type="number" value="${s.start}" min="0" step="0.01" style="width:100%;" onchange="segments[${i}].start=+this.value;buildChatEvents();" />
+        <button class="btn" onclick="captureT(${i}, 'start')" style="padding:4px 6px;" title="Capturar Tiempo"><i class="ti ti-clock"></i></button>
+      </div>
+      <div style="display:flex; gap:2px; align-items:center;">
+        <input type="number" value="${s.end}" min="0" step="0.01" style="width:100%;" onchange="segments[${i}].end=+this.value;buildChatEvents();" />
+        <button class="btn" onclick="captureT(${i}, 'end')" style="padding:4px 6px;" title="Capturar Tiempo"><i class="ti ti-clock"></i></button>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:4px;">
+        <input type="text" placeholder="Letra Principal" value="${s.lyric}" onchange="segments[${i}].lyric=this.value;buildChatEvents();" />
+        <input type="text" placeholder="Traducción (Opcional)" value="${s.translation||''}" onchange="segments[${i}].translation=this.value;buildChatEvents();" />
+      </div>
+      <select onchange="segments[${i}].memberId=+this.value;this.style.borderLeft='3px solid '+(members[+this.value]||members[0]).color;buildChatEvents();" style="border-left:3px solid ${m.color};width:100%;height:100%;">${mopts(s.memberId)}</select>
+      <div style="display:flex; gap:4px;">
+        <button class="btn" onclick="insertS(${i})" style="padding:4px 7px;" title="Añadir línea debajo"><i class="ti ti-plus"></i></button>
+        <button class="btn btn-d" onclick="rmS(${i})" style="padding:4px 7px;" title="Eliminar línea"><i class="ti ti-x"></i></button>
+      </div>`;
+    el.appendChild(d);
+  });
+  buildChatEvents();
+}
+
+function addS(){const last=segments[segments.length-1];const st=last?last.end:0;segments.push({start:st,end:st+12,lyric:'Nueva línea...',translation:'',memberId:0});renderS();}
+function insertS(index){
+  const curr = segments[index]; const st = curr ? curr.end : 0;
+  segments.splice(index + 1, 0, { start: st, end: st + 3, lyric: 'Nueva...', translation:'', memberId: curr.memberId });
+  renderS();
+}
+function rmS(i){
+  segments.splice(i,1);
+  if(activeCapIdx >= segments.length) activeCapIdx = Math.max(0, segments.length - 1);
+  renderS();
+}
+function removeAllS(){ if(confirm("¿Seguro que quieres vaciar todo?")) { segments = []; activeCapIdx=0; renderS(); } }
+
+function addBulkLyrics() {
+  const text = document.getElementById('bulk-lyrics').value; if (!text.trim()) return;
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  let lastEnd = segments.length > 0 ? segments[segments.length - 1].end : 0;
+  lines.forEach(line => { segments.push({ start: lastEnd, end: lastEnd + 5, lyric: line, translation:'', memberId: 0 }); lastEnd += 5; });
+  document.getElementById('bulk-lyrics').value = ''; renderS();
+}
+
+function initDisplayState(){ displayWidths=members.map(()=>0); }
+
+function computeTotals(t){
+  const totals=members.map(()=>0);
+  segments.forEach(s=>{
+    if(s.memberId<members.length){
+      const eff=Math.min(s.end,t);
+      if(eff>s.start){
+        const dur = eff - s.start; const m = members[s.memberId];
+        const nameStr = m && m.name ? String(m.name) : '';
+        if(nameStr === 'ALL') { 
+            members.forEach((other, idx) => { 
+                const oName = other && other.name ? String(other.name) : '';
+                if(oName !== 'ALL' && !oName.includes('+')) totals[idx] += dur; 
+            });
+        } else if (nameStr.includes('+')) {
+          const subNames = nameStr.split('+').map(n => n.trim().toLowerCase());
+          members.forEach((other, idx) => { 
+              const oName = other && other.name ? String(other.name).toLowerCase() : '';
+              if (subNames.includes(oName)) totals[idx] += dur; 
+          });
+        } else { totals[s.memberId] += dur; }
+      }
+    }
+  });
+  return totals;
+}
+
+// --- ALINEACIÓN DINÁMICA DE BARRAS ---
 function buildBars(){
   const c = document.getElementById('bars-container');
   c.innerHTML = '';
@@ -657,6 +773,7 @@ function updateAnim(t){
     const nameStr = m && m.name ? String(m.name) : '';
     if(nameStr === 'ALL' || nameStr.includes('+')) return; 
     
+    // Ancho animado por JS (lerp puro sin CSS para evitar tirones)
     const targetWidth = (totals[i]/maxT)*100;
     displayWidths[i]=lerp(displayWidths[i] || 0, targetWidth, 0.08);
     
@@ -799,7 +916,6 @@ function resetAnim(){
   document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-play"></i> Play');
   if(ytPlayer && typeof ytPlayer.pauseVideo === 'function') { ytPlayer.pauseVideo(); ytPlayer.seekTo(0, true); }
   
-  // Vaciado forzado e instantáneo del historial de chat al reiniciar
   const historyArea = document.getElementById('chat-history');
   if(historyArea) historyArea.innerHTML = '<div style="text-align:center; color:var(--color-text-secondary); font-size:13px; margin-top:2rem;">The chat is empty...</div>';
   const typingDiv = document.getElementById('typing-indicator');
@@ -840,10 +956,10 @@ async function recordScreen() {
       alert("No se ha detectado audio. Recuerda marcar 'Compartir audio de la pestaña'.");
     }
 
-    // Activa clase CSS para ocultar menús antes de inicializar la captura del fragmento
+    // Activa clase CSS para ocultar menús antes de inicializar la captura
     document.body.classList.add('recording-active');
 
-    // Desactivación del modo limpio cuando el usuario detiene la compartición desde el banner de Chrome
+    // Desactivación del modo limpio cuando el usuario detiene la compartición
     displayStream.getVideoTracks()[0].onended = () => {
       document.body.classList.remove('recording-active');
     };
