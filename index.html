@@ -406,8 +406,7 @@ function changeSpeed(val) {
 function applyBg() {
   if(!projectBg) return;
   document.querySelectorAll('.custom-bg').forEach(el => el.style.backgroundImage = `url(${projectBg})`);
-  document.querySelectorAll('.custom-overlay').forEach(el => el.style.background = 'rgba(0,0,0,0.7)');
-  document.body.classList.add('dark-theme'); renderStats();
+  document.querySelectorAll('.custom-overlay').forEach(el => el.style.background = 'transparent');
 }
 
 function setBgImage(e) {
