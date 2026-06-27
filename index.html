@@ -101,7 +101,12 @@ textarea{resize:vertical;padding:8px;}
   display: flex; justify-content: flex-end; align-items: center; gap: 6px;
   white-space: normal; line-height: 1.2; word-break: break-word;
 }
-.hbar-track {flex:1;background:var(--color-background-primary);border-radius:6px;height:24px;overflow:hidden;border:0.5px solid var(--color-border-tertiary); box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);}
+.hbar-track {
+  flex:1;background:var(--color-background-primary);border-radius:6px;height:24px;overflow:hidden;
+  border:0.5px solid var(--color-border-tertiary); 
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+  transition: box-shadow 0.3s ease, border-color 0.3s ease; /* Suavidad para el resplandor activo */
+}
 .hbar-fill {height:100%;border-radius:4px;width:0%;} 
 .hbar-secs {font-size:12px;text-align:right;flex-shrink:0;color:var(--color-text-primary); font-weight:500;}
 
@@ -128,8 +133,8 @@ textarea{resize:vertical;padding:8px;}
 /* Barras de scroll limpias */
 #chat-history::-webkit-scrollbar { width: 6px; }
 #chat-history::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 4px; }
-#bars-container::-webkit-scrollbar { width: 6px; }
-#bars-container::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 4px; }
+#right-panel .content-z::-webkit-scrollbar { width: 6px; }
+#right-panel .content-z::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 4px; }
 
 /* Ocultar menús al grabar pantalla */
 body.recording-active .tabs,
@@ -156,7 +161,7 @@ body.recording-active #split-layout {
 
 <div id="tab-members" class="panel active">
   <div class="stitle">Miembros del grupo</div>
-  <p class="hint" style="margin-bottom:10px;">Añade "ALL" para coros. Miembros unidos por "+" (ej: "Jin + Suga"). Haz clic en el círculo de color para subir foto.</p>
+  <p class="hint" style="margin-bottom:10px;">Añade "ALL" para coros. Miembros unidos por "+" (ej: "Jin + Suga"). También puedes añadir etiquetas de grupo a cada miembro.</p>
   <div id="mlist"></div>
   <div style="display:flex;gap:8px;margin-top:.5rem;">
     <input type="text" id="nm-inp" placeholder="Nombre del miembro" style="flex:1;" />
@@ -296,34 +301,36 @@ const PAL=[
 ];
 
 let members=[
-  {name:'Jin',color:PAL[0], avatar:''},
-  {name:'Suga',color:PAL[1], avatar:''},
-  {name:'J-Hope',color:PAL[2], avatar:''},
-  {name:'ALL',color:PAL[8], avatar:''}, 
+  {name:'Jin', group:'', color:PAL[0], avatar:''},
+  {name:'Suga', group:'', color:PAL[1], avatar:''},
+  {name:'J-Hope', group:'', color:PAL[2], avatar:''},
+  {name:'ALL', group:'', color:PAL[8], avatar:''}, 
 ];
 let segments=[
-  {start:0,end:5.50,lyric:'Jin starts the song', translation:'Jin empieza la cancion', memberId:0},
-  {start:8.00,end:12.00,lyric:'Suga comes in later', translation:'Suga entra mas tarde', memberId:1}, 
+  {start:0,end:5.50,lyric:'Jin starts the song', translation:'Jin empieza la canción', memberId:0},
+  {start:8.00,end:12.00,lyric:'Suga comes in later', translation:'Suga entra más tarde', memberId:1}, 
 ];
 
 let playing=false,curTime=0,lastTS=null,animId=null,playSpeed=1;
-let displayWidths=[];
+let displayWidths=[], displayOrders=[];
 let donutAngles=[], donutAnimId=null;
-let liveDonutAngles=[]; // Águlos para la gráfica en vivo
+let liveDonutAngles=[];
 let activeCapIdx = 0; 
 let projectBg = '';
 let currentVideoId = '';
 
 let chatEvents = [];
 let prevEventKey = '';
+let prevTypingHTML = '';
+
+let globalMaxEnds = [];
+let globalMaxT = 1;
 
 // --- YOUTUBE API INTEGRATION ---
 let ytPlayer = null;
 let isYtReady = false;
 
-function onYouTubeIframeAPIReady() {
-  isYtReady = true;
-}
+function onYouTubeIframeAPIReady() { isYtReady = true; }
 
 function extractVideoID(url){
   if (!url) return null;
@@ -335,37 +342,23 @@ function extractVideoID(url){
 function loadYouTubeVideo() {
   const url = document.getElementById('yt-url').value;
   const vid = extractVideoID(url);
-  if(!vid) {
-    alert("Por favor introduce una URL de YouTube valida.");
-    return;
-  }
-  
+  if(!vid) { alert("Por favor introduce una URL de YouTube válida."); return; }
   currentVideoId = url;
 
-  if (typeof YT === 'undefined' || !YT.Player) {
-     setTimeout(loadYouTubeVideo, 500);
-     return;
-  }
+  if (typeof YT === 'undefined' || !YT.Player) { setTimeout(loadYouTubeVideo, 500); return; }
 
   if(ytPlayer && ytPlayer.loadVideoById) {
     ytPlayer.loadVideoById(vid);
   } else {
     ytPlayer = new YT.Player('yt-player', {
-      height: '100%',
-      width: '100%',
-      videoId: vid,
+      height: '100%', width: '100%', videoId: vid,
       playerVars: { 'playsinline': 1, 'controls': 1, 'disablekb': 0, 'rel': 0 },
-      events: {
-        'onReady': onPlayerReady,
-        'onStateChange': onPlayerStateChange
-      }
+      events: { 'onReady': onPlayerReady, 'onStateChange': onPlayerStateChange }
     });
   }
 }
 
-function onPlayerReady(event) {
-  document.getElementById('song-dur').value = Math.ceil(event.target.getDuration());
-}
+function onPlayerReady(event) { document.getElementById('song-dur').value = Math.ceil(event.target.getDuration()); }
 
 function onPlayerStateChange(event) {
   if (event.data == YT.PlayerState.PLAYING && !playing) {
@@ -379,13 +372,9 @@ function onPlayerStateChange(event) {
   }
 }
 
-// --- ATAJOS DE TECLADO ---
 document.addEventListener('keydown', e => {
   if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-  if(e.code === 'Space') { 
-    e.preventDefault(); 
-    togglePlay(); 
-  }
+  if(e.code === 'Space') { e.preventDefault(); togglePlay(); }
   if(e.code === 'KeyI') { e.preventDefault(); if(segments[activeCapIdx]) captureT(activeCapIdx, 'start'); }
   if(e.code === 'KeyO') { 
     e.preventDefault(); 
@@ -399,20 +388,12 @@ document.addEventListener('keydown', e => {
 
 function captureT(index, prop) {
   let t = 0;
-  try {
-      t = (ytPlayer && typeof ytPlayer.getPlayerState === 'function') ? ytPlayer.getCurrentTime() : curTime;
-  } catch(e) {
-      t = curTime;
-  }
+  try { t = (ytPlayer && typeof ytPlayer.getPlayerState === 'function') ? ytPlayer.getCurrentTime() : curTime; } catch(e) { t = curTime; }
   if (isNaN(t)) t = 0;
-  segments[index][prop] = parseFloat(t.toFixed(2)); 
-  renderS();
+  segments[index][prop] = parseFloat(t.toFixed(2)); renderS();
 }
 
-function changeSpeed(val) { 
-  playSpeed = +val; 
-  if(ytPlayer && ytPlayer.setPlaybackRate) ytPlayer.setPlaybackRate(playSpeed); 
-}
+function changeSpeed(val) { playSpeed = +val; if(ytPlayer && ytPlayer.setPlaybackRate) ytPlayer.setPlaybackRate(playSpeed); }
 
 // --- UI PRINCIPAL ---
 function applyBg() {
@@ -459,6 +440,42 @@ function sw(name){
 
 function fmt(s){ const m=Math.floor(s/60), sc=Math.floor(s%60); return m+':'+(sc<10?'0':'')+sc; }
 
+// --- FUNCIONES CORE PARA GRUPOS Y RENDERIZADO ---
+
+// Devuelve TRUE si es un miembro real (no es 'ALL', no tiene '+', ni es el nombre general de un grupo)
+function isDisplayableMember(m) {
+    if(!m) return false;
+    const n = String(m.name).trim();
+    if (n === 'ALL' || n.includes('+')) return false;
+    // Si el nombre de este miembro coincide con el parámetro "grupo" de OTRA persona, es un integrante falso (agrupador)
+    const isGroup = members.some(x => x !== m && x.group && x.group.trim() !== '' && x.group.trim().toLowerCase() === n.toLowerCase());
+    return !isGroup;
+}
+
+// Resuelve qué miembros cantan realmente cuando seleccionas un id (soporta ALL, sumas y Grupos)
+function getIncludedMembers(memberId) {
+    const m = members[memberId];
+    if (!m) return [];
+    const nameStr = String(m.name).trim();
+    let included = [];
+    if (nameStr === 'ALL') {
+        members.forEach((other, idx) => { if (isDisplayableMember(other)) included.push(idx); });
+    } else if (nameStr.includes('+')) {
+        const subNames = nameStr.split('+').map(n => n.trim().toLowerCase());
+        members.forEach((other, idx) => {
+            if (isDisplayableMember(other) && subNames.includes(String(other.name).trim().toLowerCase())) included.push(idx);
+        });
+    } else {
+        const groupMatches = members.filter(x => x !== m && x.group && x.group.trim() !== '' && x.group.trim().toLowerCase() === nameStr.toLowerCase());
+        if (groupMatches.length > 0) {
+            groupMatches.forEach(gm => included.push(members.indexOf(gm)));
+        } else {
+            included.push(memberId);
+        }
+    }
+    return included;
+}
+
 function renderM(){
   const el=document.getElementById('mlist');el.innerHTML='';
   members.forEach((m,i)=>{
@@ -472,19 +489,19 @@ function renderM(){
          <div style="width:100%; height:100%; background:${m.color}; display:${m.avatar ? 'none' : 'block'};"></div>
          <input type="file" accept="image/*" style="position:absolute; top:0; left:0; opacity:0; width:100%; height:100%; cursor:pointer;" onchange="handleAvatarUpload(event, ${i})">
       </div>
-      <input type="text" value="${m.name}" style="flex:1;min-width:70px;" onchange="members[${i}].name=this.value;renderS();" />
+      <input type="text" value="${m.name}" style="flex:1;min-width:70px;" placeholder="Nombre" onchange="members[${i}].name=this.value;renderS();" />
+      <input type="text" value="${m.group || ''}" style="width:70px; flex-shrink:0;" placeholder="Grupo" title="Escribe el nombre del grupo" onchange="members[${i}].group=this.value;renderS();" />
       <div style="display:flex;gap:4px;flex-wrap:wrap;">${cols}</div>
       <button class="btn btn-d" onclick="removeM(${i})" style="padding:4px 8px;"><i class="ti ti-trash"></i></button>`;
     el.appendChild(d);
   });
   buildChatEvents();
 }
-
 function setCol(i,ci){members[i].color=PAL[ci];renderM();initDisplayState();buildBars();}
-function addM(){const inp=document.getElementById('nm-inp');const n=inp.value.trim()||'Miembro '+(members.length+1);members.push({name:n,color:PAL[members.length%PAL.length],avatar:''});inp.value='';renderM();renderS();initDisplayState();}
+function addM(){const inp=document.getElementById('nm-inp');const n=inp.value.trim()||'Miembro '+(members.length+1);members.push({name:n, group:'', color:PAL[members.length%PAL.length],avatar:''});inp.value='';renderM();renderS();initDisplayState();}
 function removeM(i){
   members.splice(i,1);
-  if(members.length === 0) members.push({name:'Cantante', color:'#7F77DD', avatar:''});
+  if(members.length === 0) members.push({name:'Cantante', group:'', color:'#7F77DD', avatar:''});
   segments.forEach(s=>{if(s.memberId>=members.length)s.memberId=0;});
   renderM();renderS();initDisplayState();
 }
@@ -554,25 +571,12 @@ function initDisplayState(){
 function computeTotals(t){
   const totals=members.map(()=>0);
   segments.forEach(s=>{
-    if(s.memberId<members.length){
       const eff=Math.min(s.end,t);
       if(eff>s.start){
-        const dur = eff - s.start; const m = members[s.memberId];
-        const nameStr = m && m.name ? String(m.name) : '';
-        if(nameStr === 'ALL') { 
-            members.forEach((other, idx) => { 
-                const oName = other && other.name ? String(other.name) : '';
-                if(oName !== 'ALL' && !oName.includes('+')) totals[idx] += dur; 
-            });
-        } else if (nameStr.includes('+')) {
-          const subNames = nameStr.split('+').map(n => n.trim().toLowerCase());
-          members.forEach((other, idx) => { 
-              const oName = other && other.name ? String(other.name).toLowerCase() : '';
-              if (subNames.includes(oName)) totals[idx] += dur; 
-          });
-        } else { totals[s.memberId] += dur; }
+        const dur = eff - s.start;
+        const included = getIncludedMembers(s.memberId);
+        included.forEach(idx => totals[idx] += dur);
       }
-    }
   });
   return totals;
 }
@@ -589,8 +593,7 @@ function buildBars(){
   document.body.appendChild(dummy);
 
   members.forEach((m,i)=>{
-    const nameStr = m && m.name ? String(m.name) : '';
-    if(nameStr === 'ALL' || nameStr.includes('+')) return;
+    if(!isDisplayableMember(m)) return;
     dummy.textContent = m.name;
     maxW = Math.max(maxW, dummy.offsetWidth + (m.avatar ? 38 : 15));
   });
@@ -598,8 +601,7 @@ function buildBars(){
   c.style.setProperty('--name-w', Math.ceil(maxW + 10) + 'px');
 
   members.forEach((m,i)=>{
-    const nameStr = m && m.name ? String(m.name) : '';
-    if(nameStr === 'ALL' || nameStr.includes('+')) return; 
+    if(!isDisplayableMember(m)) return; 
     let avatarHTML = m.avatar 
        ? `<img src="${m.avatar}" style="width:22px;height:22px;border-radius:50%;object-fit:cover; border:1.5px solid ${m.color}; background:var(--color-background-primary); flex-shrink:0;">` 
        : '';
@@ -623,30 +625,27 @@ function drawLiveDonut(totals) {
   const ctx = canvas.getContext('2d');
   const W = canvas.width, H = canvas.height, cx = W/2, cy = H/2, R = 72, r = 52;
   
-  const validTotals = totals.filter((_, i) => {
-      const n = members[i] && members[i].name ? String(members[i].name) : '';
-      return n !== 'ALL' && !n.includes('+');
-  });
+  const validTotals = totals.filter((_, i) => isDisplayableMember(members[i]));
   const liveTotal = validTotals.reduce((a,b)=>a+b,0) || 1;
 
   if(liveDonutAngles.length !== members.length) liveDonutAngles = members.map(()=>0);
-  
   ctx.clearRect(0,0,W,H);
   
   const GAP = 0.02;
   let activeCount = validTotals.filter(v => v > 0).length;
 
   members.forEach((m, i) => {
-    const nameStr = m && m.name ? String(m.name) : '';
-    if(nameStr === 'ALL' || nameStr.includes('+')) return;
+    if(!isDisplayableMember(m)) return;
     const target = (totals[i] / liveTotal) * Math.PI * 2;
     liveDonutAngles[i] = lerp(liveDonutAngles[i] || 0, target, 0.1);
   });
 
+  // ORDENAR LOS GAJOS DE MAYOR A MENOR PARA DIBUJARLOS
+  const order = [...members.map((_,i)=>i)].filter(i => isDisplayableMember(members[i])).sort((a,b)=> totals[b] - totals[a]);
+
   let startAngle = -Math.PI/2;
-  members.forEach((m, i) => {
-    const nameStr = m && m.name ? String(m.name) : '';
-    if(nameStr === 'ALL' || nameStr.includes('+')) return;
+  order.forEach(i => {
+    const m = members[i];
     const sweep = Math.max(liveDonutAngles[i] - (activeCount > 1 ? GAP : 0), 0);
     if(sweep <= 0) return;
     ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,R,startAngle,startAngle+sweep); ctx.closePath();
@@ -683,22 +682,18 @@ function drawLiveDonut(totals) {
 function buildChatEvents() {
   chatEvents = [];
   if(!members || members.length === 0) return;
-  let maxEnds = members.map(()=>0);
+  globalMaxEnds = members.map(()=>0);
   
   segments.forEach(s => {
-      const m = members[s.memberId];
-      const nameStr = m && m.name ? String(m.name) : '';
-      if(nameStr === 'ALL'){
-      } else if (nameStr.includes('+')) {
-        const subNames = nameStr.split('+').map(n => n.trim().toLowerCase());
-        members.forEach((other, idx) => { 
-            const otherName = other && other.name ? String(other.name).toLowerCase() : '';
-            if (subNames.includes(otherName)) maxEnds[idx] = Math.max(maxEnds[idx]||0, s.end); 
-        });
-      } else {
-        if (s.memberId < maxEnds.length) maxEnds[s.memberId] = Math.max(maxEnds[s.memberId]||0, s.end);
-      }
+      getIncludedMembers(s.memberId).forEach(idx => {
+          globalMaxEnds[idx] = Math.max(globalMaxEnds[idx]||0, s.end);
+      });
   });
+
+  const dur = +document.getElementById('song-dur').value || 200;
+  const finalTotals = computeTotals(dur);
+  const validFinalTotals = finalTotals.filter((_, i) => isDisplayableMember(members[i]));
+  globalMaxT = Math.max(validFinalTotals.length > 0 ? Math.max(...validFinalTotals) : 0, 1);
 
   segments.forEach((s, idx) => {
       chatEvents.push({ type: 'lyric', start: s.start, end: s.end, act: s, idx: idx });
@@ -706,10 +701,9 @@ function buildChatEvents() {
 
   let leavesMap = {};
   members.forEach((m, i) => {
-      const nameStr = m && m.name ? String(m.name) : '';
-      if(nameStr !== 'ALL' && !nameStr.includes('+') && maxEnds[i] > 0) {
-          if(!leavesMap[maxEnds[i]]) leavesMap[maxEnds[i]] = [];
-          leavesMap[maxEnds[i]].push(i);
+      if(isDisplayableMember(m) && globalMaxEnds[i] > 0) {
+          if(!leavesMap[globalMaxEnds[i]]) leavesMap[globalMaxEnds[i]] = [];
+          leavesMap[globalMaxEnds[i]].push(i);
       }
   });
 
@@ -719,6 +713,7 @@ function buildChatEvents() {
 
   chatEvents.sort((a,b) => a.start - b.start);
   prevEventKey = ''; 
+  prevTypingHTML = '';
 }
 
 function renderChatHistory(visibleEvents, t) {
@@ -808,44 +803,23 @@ function updateAnim(t){
   document.getElementById('scrubber').max = dur;
   document.getElementById('scrubber').value = t;
 
-  const totals=computeTotals(t);
-  
-  // Actualizar la rueda en vivo del Panel Derecho
-  drawLiveDonut(totals);
+  const segTimeDisp = document.getElementById('seg-time-display');
+  if(segTimeDisp) segTimeDisp.textContent = t.toFixed(2) + 's';
 
+  const totals=computeTotals(t);
   const order=[...members.map((_,i)=>i)].sort((a,b)=>totals[b]-totals[a]);
 
-  let maxEnds = members.map(()=>0);
-  segments.forEach(s => {
-      const m = members[s.memberId];
-      const nameStr = m && m.name ? String(m.name) : '';
-      if(nameStr === 'ALL'){
-      } else if (nameStr.includes('+')) {
-        const subNames = nameStr.split('+').map(n => n.trim().toLowerCase());
-        members.forEach((other, idx) => { 
-            const oName = other && other.name ? String(other.name).toLowerCase() : '';
-            if (subNames.includes(oName)) maxEnds[idx] = Math.max(maxEnds[idx]||0, s.end); 
-        });
-      } else {
-        if (s.memberId < maxEnds.length) maxEnds[s.memberId] = Math.max(maxEnds[s.memberId]||0, s.end);
-      }
-  });
+  drawLiveDonut(totals);
+
+  const actives = segments.filter(s => t >= s.start && t < s.end);
+  let activeSingers = new Set();
+  actives.forEach(s => { getIncludedMembers(s.memberId).forEach(idx => activeSingers.add(idx)); });
 
   const ROW_HEIGHT = 46;
-
-  // Calculamos el MaxT Global final para que las barras no se estanquen
-  const finalTotals = computeTotals(dur);
-  const validFinalTotals = finalTotals.filter((_, i) => {
-      const n = members[i] && members[i].name ? String(members[i].name) : '';
-      return n !== 'ALL' && !n.includes('+');
-  });
-  const maxT = Math.max(validFinalTotals.length > 0 ? Math.max(...validFinalTotals) : 0, 1);
-
   members.forEach((m,i)=>{
-    const nameStr = m && m.name ? String(m.name) : '';
-    if(nameStr === 'ALL' || nameStr.includes('+')) return; 
+    if(!isDisplayableMember(m)) return; 
     
-    const targetWidth = (totals[i]/maxT)*100;
+    const targetWidth = (totals[i]/globalMaxT)*100;
     
     const fill=document.getElementById('hfill-'+i), secs=document.getElementById('hsecs-'+i), row=document.getElementById('hrow-'+i);
     if(!fill || !secs || !row) return;
@@ -853,12 +827,24 @@ function updateAnim(t){
     fill.style.width=targetWidth.toFixed(2)+'%'; 
     secs.textContent=totals[i].toFixed(1)+'s';
     
-    if (t > maxEnds[i] && maxEnds[i] > 0) {
-       row.style.filter = 'grayscale(50%)';
-       row.style.opacity = '0.7';
-    } else {
+    const track = row.querySelector('.hbar-track');
+    
+    // GESTIÓN DEL RESPLANDOR (GLOW) BLANCO PARA EL QUE CANTA
+    if(activeSingers.has(i)) {
        row.style.filter = 'grayscale(0%)';
        row.style.opacity = '1';
+       track.style.boxShadow = '0 0 10px 2px rgba(255, 255, 255, 0.8), inset 0 1px 3px rgba(0,0,0,0.1)';
+       track.style.borderColor = 'rgba(255, 255, 255, 0.9)';
+    } else {
+       if (t > globalMaxEnds[i] && globalMaxEnds[i] > 0) {
+          row.style.filter = 'grayscale(50%)';
+          row.style.opacity = '0.7';
+       } else {
+          row.style.filter = 'grayscale(0%)';
+          row.style.opacity = '1';
+       }
+       track.style.boxShadow = 'inset 0 1px 3px rgba(0,0,0,0.1)';
+       track.style.borderColor = 'var(--color-border-tertiary)';
     }
 
     const rank = order.indexOf(i);
@@ -877,7 +863,7 @@ function updateAnim(t){
       updateActiveKaraoke(visibleEvents, t);
   }
 
-  const actives = segments.filter(s => t >= s.start && t < s.end);
+  // Lógica "is typing..."
   let recentSingers = [];
   if (actives.length > 0) {
     recentSingers = actives.map(s => s.memberId);
@@ -920,12 +906,11 @@ function updateAnim(t){
 
   const typingDiv = document.getElementById('typing-indicator');
   if (typingDiv) {
-    if (typingHTML) {
-      typingDiv.innerHTML = typingHTML;
-      typingDiv.style.opacity = 1;
-    } else {
-      typingDiv.style.opacity = 0;
+    if (typingHTML !== prevTypingHTML) {
+        typingDiv.innerHTML = typingHTML;
+        prevTypingHTML = typingHTML;
     }
+    typingDiv.style.opacity = typingHTML ? 1 : 0;
   }
 }
 
@@ -982,7 +967,7 @@ function togglePlay(){
 }
 
 function resetAnim(){
-  playing=false;if(animId)cancelAnimationFrame(animId); curTime=0;lastTS=null; prevEventKey='';
+  playing=false;if(animId)cancelAnimationFrame(animId); curTime=0;lastTS=null; prevEventKey=''; prevTypingHTML='';
   document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-play"></i> Play');
   if(ytPlayer && typeof ytPlayer.pauseVideo === 'function') { ytPlayer.pauseVideo(); ytPlayer.seekTo(0, true); }
   
@@ -1083,10 +1068,7 @@ function renderStats(){
   const dur = +document.getElementById('song-dur').value || 200;
   const totals = computeTotals(dur); 
   const total=totals.reduce((a,b)=>a+b,0)||1;
-  const sorted=[...members.map((_,i)=>i)].filter(i => {
-      const n = members[i] && members[i].name ? String(members[i].name) : '';
-      return n !== 'ALL' && !n.includes('+');
-  }).sort((a,b)=>totals[b]-totals[a]);
+  const sorted=[...members.map((_,i)=>i)].filter(i => isDisplayableMember(members[i])).sort((a,b)=>totals[b]-totals[a]);
 
   const canvas=document.getElementById('donut-canvas');
   if(!canvas) return;
@@ -1134,8 +1116,7 @@ function animateDonut(canvas,targets,totals,total,frame){
   let startAngle=-Math.PI/2;
   const GAP=0.018;
   members.forEach((m,i)=>{
-    const nameStr = m && m.name ? String(m.name) : '';
-    if(nameStr === 'ALL' || nameStr.includes('+')) return;
+    if(!isDisplayableMember(m)) return;
     const sweep=Math.max(donutAngles[i]-GAP,0);
     if(sweep<=0)return;
     ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,R,startAngle,startAngle+sweep); ctx.closePath();
@@ -1144,10 +1125,7 @@ function animateDonut(canvas,targets,totals,total,frame){
   
   ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fillStyle=bg;ctx.fill();
   
-  const validTotals = totals.filter((_, i) => {
-      const n = members[i] && members[i].name ? String(members[i].name) : '';
-      return n !== 'ALL' && !n.includes('+');
-  });
+  const validTotals = totals.filter((_, i) => isDisplayableMember(members[i]));
   const maxTotal = validTotals.length > 0 ? Math.max(...validTotals) : 0;
   const pctTop=Math.round((maxTotal/total)*100);
   const topIdx=totals.indexOf(maxTotal);
@@ -1195,6 +1173,7 @@ function importData(e) {
           if(members.length === 0) members.push({name:'Cantante', color:'#7F77DD', avatar:''});
           members.forEach(m => {
              m.name = m.name ? String(m.name) : 'Desconocido';
+             m.group = m.group ? String(m.group) : '';
              m.color = m.color || '#7F77DD';
              m.avatar = m.avatar || '';
           });
