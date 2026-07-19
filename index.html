@@ -82,7 +82,7 @@ textarea{resize:vertical;padding:8px;}
 #right-panel { flex: 1; min-width: 320px; position: relative; border-radius: 12px; border: 1px solid var(--color-border-tertiary); overflow: hidden; display: flex; flex-direction: column; }
 
 .custom-bg { position:absolute; top:0; left:0; right:0; bottom:0; background-size:cover; background-position:center; z-index:0; }
-.custom-overlay { position:absolute; top:0; left:0; right:0; bottom:0; background:var(--color-background-secondary); z-index:1; transition:background 0.3s; }
+.custom-overlay { position:absolute; top:0; left:0; right:0; bottom:0; background:transparent; z-index:1; transition:background 0.3s; }
 .content-z { position:relative; z-index:2; height:100%; display:flex; flex-direction:column; overflow:hidden; }
 
 /* BARRAS: Grid dinámico para alinear todo independientemente del texto */
@@ -105,7 +105,7 @@ textarea{resize:vertical;padding:8px;}
   flex:1;background:var(--color-background-primary);border-radius:6px;height:24px;overflow:hidden;
   border:0.5px solid var(--color-border-tertiary); 
   box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
-  transition: box-shadow 0.3s ease, border-color 0.3s ease; /* Suavidad para el resplandor activo */
+  transition: box-shadow 0.3s ease, border-color 0.3s ease; 
 }
 .hbar-fill {height:100%;border-radius:4px;width:0%;} 
 .hbar-secs {font-size:12px;text-align:right;flex-shrink:0;color:var(--color-text-primary); font-weight:500;}
@@ -133,8 +133,8 @@ textarea{resize:vertical;padding:8px;}
 /* Barras de scroll limpias */
 #chat-history::-webkit-scrollbar { width: 6px; }
 #chat-history::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 4px; }
-#right-panel .content-z::-webkit-scrollbar { width: 6px; }
-#right-panel .content-z::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 4px; }
+#bars-container::-webkit-scrollbar { width: 6px; }
+#bars-container::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 4px; }
 
 /* Ocultar menús al grabar pantalla */
 body.recording-active .tabs,
@@ -160,8 +160,15 @@ body.recording-active #split-layout {
 </div>
 
 <div id="tab-members" class="panel active">
-  <div class="stitle">Miembros del grupo</div>
-  <p class="hint" style="margin-bottom:10px;">Añade "ALL" para coros. Miembros unidos por "+" (ej: "Jin + Suga"). También puedes añadir etiquetas de grupo a cada miembro.</p>
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+    <div class="stitle" style="margin:0;">Miembros del grupo</div>
+    <div style="display:flex; gap:8px;">
+      <button class="btn btn-d" onclick="exportMembers()" style="font-size:11px; padding:4px 8px;">Exportar Miembros</button>
+      <button class="btn btn-d" onclick="document.getElementById('import-members').click()" style="font-size:11px; padding:4px 8px;">Importar Miembros</button>
+      <input type="file" id="import-members" accept=".json" style="display:none;" onchange="importMembers(event)" />
+    </div>
+  </div>
+  <p class="hint" style="margin-bottom:10px;">Añade "ALL" para coros. Miembros unidos por "+" (ej: "Jin + Suga"). También puedes agruparlos escribiendo su nombre de grupo.</p>
   <div id="mlist"></div>
   <div style="display:flex;gap:8px;margin-top:.5rem;">
     <input type="text" id="nm-inp" placeholder="Nombre del miembro" style="flex:1;" />
@@ -175,7 +182,7 @@ body.recording-active #split-layout {
     <div><label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:3px;">Título de la Canción</label>
     <input type="text" id="song-title" placeholder="Ej: Mi Canción Genial" style="width:190px;" /></div>
     <div><label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:3px;">Duración (s)</label>
-    <input type="number" id="song-dur" value="200" min="10" style="width:80px;" /></div>
+    <input type="number" id="song-dur" value="200" min="10" style="width:80px;" onchange="buildChatEvents(); updateAnim(curTime);" /></div>
     <div style="flex:1; min-width:250px;">
       <label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:3px;">Enlace de YouTube</label>
       <div style="display:flex; gap:8px; align-items:center;">
@@ -441,18 +448,14 @@ function sw(name){
 function fmt(s){ const m=Math.floor(s/60), sc=Math.floor(s%60); return m+':'+(sc<10?'0':'')+sc; }
 
 // --- FUNCIONES CORE PARA GRUPOS Y RENDERIZADO ---
-
-// Devuelve TRUE si es un miembro real (no es 'ALL', no tiene '+', ni es el nombre general de un grupo)
 function isDisplayableMember(m) {
     if(!m) return false;
     const n = String(m.name).trim();
     if (n === 'ALL' || n.includes('+')) return false;
-    // Si el nombre de este miembro coincide con el parámetro "grupo" de OTRA persona, es un integrante falso (agrupador)
     const isGroup = members.some(x => x !== m && x.group && x.group.trim() !== '' && x.group.trim().toLowerCase() === n.toLowerCase());
     return !isGroup;
 }
 
-// Resuelve qué miembros cantan realmente cuando seleccionas un id (soporta ALL, sumas y Grupos)
 function getIncludedMembers(memberId) {
     const m = members[memberId];
     if (!m) return [];
@@ -476,6 +479,84 @@ function getIncludedMembers(memberId) {
     return included;
 }
 
+function getDisplayMembers(memberId) {
+    const m = members[memberId];
+    if (!m) return [0];
+    const nameStr = String(m.name).trim();
+    if (nameStr.includes('+')) {
+        let included = [];
+        const subNames = nameStr.split('+').map(n => n.trim().toLowerCase());
+        members.forEach((other, idx) => {
+            if (isDisplayableMember(other) && subNames.includes(String(other.name).trim().toLowerCase())) {
+                included.push(idx);
+            }
+        });
+        if(included.length > 0) return included;
+    }
+    // Para 'ALL' u otros, no desplegamos, así se visualiza solo su círculo/avatar original
+    return [memberId];
+}
+
+// --- IMPORTAR / EXPORTAR SÓLO MIEMBROS ---
+function exportMembers() {
+  const data = { members: members };
+  const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); 
+  a.href = url; 
+  a.download = 'members_export.json'; 
+  a.click(); 
+  URL.revokeObjectURL(url);
+}
+
+function importMembers(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(event) {
+    try {
+      const data = JSON.parse(event.target.result);
+      if (data.members && Array.isArray(data.members)) {
+          members = data.members.filter(m => m !== null && typeof m === 'object');
+          if(members.length === 0) members.push({name:'Cantante', group:'', color:'#7F77DD', avatar:''});
+          members.forEach(m => {
+             m.name = m.name ? String(m.name) : 'Desconocido';
+             m.group = m.group ? String(m.group) : '';
+             m.color = m.color || '#7F77DD';
+             m.avatar = m.avatar || '';
+          });
+          segments.forEach(s => { if(s.memberId >= members.length) s.memberId = 0; });
+          renderM(); renderS(); initDisplayState(); buildBars(); buildChatEvents(); updateAnim(curTime);
+      }
+    } catch (err) { alert("Error al importar miembros: " + err.message); }
+  };
+  reader.readAsText(file); e.target.value = ''; 
+}
+
+// --- MOVER MIEMBROS (ARRIBA / ABAJO) SIN ROMPER LÍNEAS ---
+function moveMemberUp(i) {
+    if (i === 0) return;
+    segments.forEach(s => {
+        if (s.memberId === i) s.memberId = i - 1;
+        else if (s.memberId === i - 1) s.memberId = i;
+    });
+    const temp = members[i-1];
+    members[i-1] = members[i];
+    members[i] = temp;
+    renderM(); renderS(); initDisplayState(); buildBars(); buildChatEvents(); updateAnim(curTime);
+}
+
+function moveMemberDown(i) {
+    if (i === members.length - 1) return;
+    segments.forEach(s => {
+        if (s.memberId === i) s.memberId = i + 1;
+        else if (s.memberId === i + 1) s.memberId = i;
+    });
+    const temp = members[i+1];
+    members[i+1] = members[i];
+    members[i] = temp;
+    renderM(); renderS(); initDisplayState(); buildBars(); buildChatEvents(); updateAnim(curTime);
+}
+
 function renderM(){
   const el=document.getElementById('mlist');el.innerHTML='';
   members.forEach((m,i)=>{
@@ -491,8 +572,10 @@ function renderM(){
       </div>
       <input type="text" value="${m.name}" style="flex:1;min-width:70px;" placeholder="Nombre" onchange="members[${i}].name=this.value;renderS();" />
       <input type="text" value="${m.group || ''}" style="width:70px; flex-shrink:0;" placeholder="Grupo" title="Escribe el nombre del grupo" onchange="members[${i}].group=this.value;renderS();" />
-      <div style="display:flex;gap:4px;flex-wrap:wrap;">${cols}</div>
-      <button class="btn btn-d" onclick="removeM(${i})" style="padding:4px 8px;"><i class="ti ti-trash"></i></button>`;
+      <div style="display:flex;gap:4px;flex-wrap:wrap; max-width: 150px;">${cols}</div>
+      <button class="btn" onclick="moveMemberUp(${i})" ${i===0?'disabled':''} style="padding:4px;" title="Subir">↑</button>
+      <button class="btn" onclick="moveMemberDown(${i})" ${i===members.length-1?'disabled':''} style="padding:4px;" title="Bajar">↓</button>
+      <button class="btn btn-d" onclick="removeM(${i})" style="padding:4px 8px;" title="Eliminar"><i class="ti ti-trash"></i></button>`;
     el.appendChild(d);
   });
   buildChatEvents();
@@ -529,7 +612,7 @@ function renderS(){
         <button class="btn" onclick="captureT(${i}, 'end')" style="padding:4px 6px;" title="Capturar Tiempo"><i class="ti ti-clock"></i></button>
       </div>
       <div style="display:flex; flex-direction:column; gap:4px;">
-        <input type="text" placeholder="Letra Principal" value="${s.lyric}" onchange="segments[${i}].lyric=this.value;buildChatEvents();" />
+        <input type="text" placeholder="Letra (Pon + al inicio para fusionar)" value="${s.lyric}" onchange="segments[${i}].lyric=this.value;buildChatEvents();" />
         <input type="text" placeholder="Traducción (Opcional)" value="${s.translation||''}" onchange="segments[${i}].translation=this.value;buildChatEvents();" />
       </div>
       <select onchange="segments[${i}].memberId=+this.value;this.style.borderLeft='3px solid '+(members[+this.value]||members[0]).color;buildChatEvents();" style="border-left:3px solid ${m.color};width:100%;height:100%;">${mopts(s.memberId)}</select>
@@ -618,7 +701,7 @@ function buildBars(){
 
 function lerp(a,b,t){return a+(b-a)*t;}
 
-// --- FUNCIONES DEL LIVE DONUT Y CHAT ---
+// --- FUNCIONES DEL LIVE DONUT Y CHAT CON BUBBLES ---
 function drawLiveDonut(totals) {
   const canvas = document.getElementById('live-donut-canvas');
   if(!canvas) return;
@@ -640,7 +723,6 @@ function drawLiveDonut(totals) {
     liveDonutAngles[i] = lerp(liveDonutAngles[i] || 0, target, 0.1);
   });
 
-  // ORDENAR LOS GAJOS DE MAYOR A MENOR PARA DIBUJARLOS
   const order = [...members.map((_,i)=>i)].filter(i => isDisplayableMember(members[i])).sort((a,b)=> totals[b] - totals[a]);
 
   let startAngle = -Math.PI/2;
@@ -653,7 +735,6 @@ function drawLiveDonut(totals) {
     startAngle += liveDonutAngles[i];
   });
   
-  // Borrar el centro para que sea transparente y se vea la imagen de fondo
   ctx.globalCompositeOperation = 'destination-out';
   ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill();
   ctx.globalCompositeOperation = 'source-over';
@@ -695,8 +776,37 @@ function buildChatEvents() {
   const validFinalTotals = finalTotals.filter((_, i) => isDisplayableMember(members[i]));
   globalMaxT = Math.max(validFinalTotals.length > 0 ? Math.max(...validFinalTotals) : 0, 1);
 
-  segments.forEach((s, idx) => {
-      chatEvents.push({ type: 'lyric', start: s.start, end: s.end, act: s, idx: idx });
+  // AGRUPACIÓN DE BURBUJAS (BUBBLES)
+  let bubbles = [];
+  let currentBubble = null;
+
+  let sortedSegs = [...segments].map((s, i) => ({...s, originalIndex: i})).sort((a,b) => a.start - b.start);
+
+  sortedSegs.forEach((seg) => {
+      let text = (seg.lyric || '').trim();
+      let isPlus = text.startsWith('+');
+      
+      if (!currentBubble) {
+          currentBubble = { segments: [seg], start: seg.start, end: seg.end };
+          bubbles.push(currentBubble);
+      } else {
+          let prevSeg = currentBubble.segments[currentBubble.segments.length - 1];
+          let sameMember = seg.memberId === prevSeg.memberId;
+          let gap = seg.start - currentBubble.end;
+          
+          // Agrupar si empieza por '+' o si es el mismo miembro y la pausa es de menos de 2.5 seg
+          if (isPlus || (sameMember && gap < 2.5)) {
+              currentBubble.segments.push(seg);
+              currentBubble.end = Math.max(currentBubble.end, seg.end);
+          } else {
+              currentBubble = { segments: [seg], start: seg.start, end: seg.end };
+              bubbles.push(currentBubble);
+          }
+      }
+  });
+
+  bubbles.forEach((b, idx) => {
+      chatEvents.push({ type: 'bubble', start: b.start, end: b.end, bubble: b, idx: idx });
   });
 
   let leavesMap = {};
@@ -729,35 +839,67 @@ function renderChatHistory(visibleEvents, t) {
       let isNew = (t - ev.start >= 0 && t - ev.start < 0.6);
       let animStyle = isNew ? 'animation: fadeIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;' : 'opacity: 1;';
 
-      if(ev.type === 'lyric') {
-          const act = ev.act;
-          const m = members[act.memberId] || members[0] || {name:'-', color:'#000'};
-          const progress = Math.max(0, Math.min(1, (t - act.start) / (act.end - act.start)));
-          const pct = progress * 100;
+      if(ev.type === 'bubble') {
+          const b = ev.bubble;
           
-          let bgStyle = '';
-          if (pct >= 100) {
-              bgStyle = `color: ${m.color};`; 
-          } else {
-              const gradient = `linear-gradient(to right, ${m.color} ${Math.max(0, pct - 8)}%, var(--color-text-secondary) ${Math.min(100, pct + 2)}%)`;
-              bgStyle = `background: ${gradient}; -webkit-background-clip: text; -webkit-text-fill-color: transparent; color: transparent;`;
-          }
+          let allIncludedIds = [];
+          b.segments.forEach(seg => {
+              // Usamos getDisplayMembers para que si es ALL o Group no se descomponga visualmente
+              const inc = getDisplayMembers(seg.memberId);
+              allIncludedIds.push(...inc);
+          });
+          const uniqueMemberIds = [...new Set(allIncludedIds)];
+          const bubbleMembers = uniqueMemberIds.map(id => members[id] || members[0] || {name:'-', color:'#000'});
+          
+          let avatarsHtml = bubbleMembers.map(m => {
+              return m.avatar 
+                  ? `<img src="${m.avatar}" style="width:20px;height:20px;border-radius:50%;object-fit:cover; border:1.5px solid ${m.color}">` 
+                  : `<div style="width:14px;height:14px;border-radius:50%;background:${m.color}; border:1.5px solid ${m.color}"></div>`;
+          }).join('');
+          
+          let namesHtml = bubbleMembers.map(m => `<span style="color:${m.color};">${m.name}</span>`).join(' <span style="color:var(--color-text-secondary)">&</span> ');
 
-          let avHTML = m.avatar 
-             ? `<img src="${m.avatar}" style="width:20px;height:20px;border-radius:50%;object-fit:cover; border:1.5px solid ${m.color}">` 
-             : `<div style="width:14px;height:14px;border-radius:50%;background:${m.color};"></div>`;
-
-          let transHtml = act.translation ? `<div style="font-size:13px; color:var(--color-text-secondary); margin-top:2px; font-weight:400;">${act.translation}</div>` : '';
+          let linesHtml = '';
+          b.segments.forEach((seg, i) => {
+              const m = members[seg.memberId] || members[0] || {color:'#000'};
+              let text = (seg.lyric || '').trim();
+              let isPlus = text.startsWith('+');
+              if (isPlus) text = text.replace(/^\+\s*/, '');
+              
+              const progress = Math.max(0, Math.min(1, (t - seg.start) / (seg.end - seg.start)));
+              const pct = progress * 100;
+              
+              let bgStyle = '';
+              if (pct >= 100) {
+                  bgStyle = `color: ${m.color};`; 
+              } else {
+                  const gradient = `linear-gradient(to right, ${m.color} ${Math.max(0, pct - 8)}%, var(--color-text-secondary) ${Math.min(100, pct + 2)}%)`;
+                  bgStyle = `background: ${gradient}; -webkit-background-clip: text; -webkit-text-fill-color: transparent; color: transparent;`;
+              }
+              
+              let spanHtml = `<span id="lyric-text-${seg.originalIndex}" style="font-size:18px;letter-spacing:.01em;font-weight:700; display:inline-block; ${bgStyle}">${text}</span>`;
+              
+              if (isPlus && i > 0) {
+                  linesHtml += `&nbsp;${spanHtml}`;
+              } else {
+                  if(i > 0) linesHtml += `</div>`; 
+                  linesHtml += `<div style="min-height:24px; margin-top:2px; line-height:1.3;">${spanHtml}`;
+              }
+          });
+          if(b.segments.length > 0) linesHtml += `</div>`; 
+          
+          let transHtml = '';
+          b.segments.forEach(seg => {
+              if (seg.translation) transHtml += `<div style="font-size:13px; color:var(--color-text-secondary); margin-top:2px; font-weight:400;">${seg.translation}</div>`;
+          });
 
           html += `
             <div style="margin-bottom: 12px; ${animStyle}">
               <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-                ${avHTML}
-                <span style="font-size:13px;font-weight:600;color:${m.color};text-transform:uppercase;">${m.name}</span>
+                ${avatarsHtml}
+                <span style="font-size:13px;font-weight:600;text-transform:uppercase;">${namesHtml}</span>
               </div>
-              <div id="lyric-text-${ev.idx}" style="font-size:18px;min-height:24px;letter-spacing:.01em;font-weight:700; display:inline-block; ${bgStyle}">
-                ${act.lyric}
-              </div>
+              ${linesHtml}
               ${transHtml}
             </div>
           `;
@@ -772,25 +914,27 @@ function renderChatHistory(visibleEvents, t) {
 
 function updateActiveKaraoke(visibleEvents, t) {
   visibleEvents.forEach(ev => {
-      if(ev.type === 'lyric') {
-          const el = document.getElementById(`lyric-text-${ev.idx}`);
-          if(el) {
-              if(t >= ev.end) {
-                  const m = members[ev.act.memberId] || members[0] || {color:'#000'};
-                  el.style.background = 'none';
-                  el.style.webkitBackgroundClip = 'initial';
-                  el.style.webkitTextFillColor = 'initial';
-                  el.style.color = m.color;
-              } else if (t >= ev.start && t < ev.end) {
-                  const m = members[ev.act.memberId] || members[0] || {color:'#000'};
-                  const progress = Math.max(0, Math.min(1, (t - ev.start) / (ev.end - ev.start)));
-                  const pct = progress * 100;
-                  el.style.background = `linear-gradient(to right, ${m.color} ${Math.max(0, pct - 8)}%, var(--color-text-secondary) ${Math.min(100, pct + 2)}%)`;
-                  el.style.webkitBackgroundClip = 'text';
-                  el.style.webkitTextFillColor = 'transparent';
-                  el.style.color = 'transparent';
+      if(ev.type === 'bubble') {
+          ev.bubble.segments.forEach(seg => {
+              const el = document.getElementById(`lyric-text-${seg.originalIndex}`);
+              if(el) {
+                  if(t >= seg.end) {
+                      const m = members[seg.memberId] || members[0] || {color:'#000'};
+                      el.style.background = 'none';
+                      el.style.webkitBackgroundClip = 'initial';
+                      el.style.webkitTextFillColor = 'initial';
+                      el.style.color = m.color;
+                  } else if (t >= seg.start && t < ev.end) {
+                      const m = members[seg.memberId] || members[0] || {color:'#000'};
+                      const progress = Math.max(0, Math.min(1, (t - seg.start) / (seg.end - seg.start)));
+                      const pct = progress * 100;
+                      el.style.background = `linear-gradient(to right, ${m.color} ${Math.max(0, pct - 8)}%, var(--color-text-secondary) ${Math.min(100, pct + 2)}%)`;
+                      el.style.webkitBackgroundClip = 'text';
+                      el.style.webkitTextFillColor = 'transparent';
+                      el.style.color = 'transparent';
+                  }
               }
-          }
+          });
       }
   });
 }
@@ -803,13 +947,12 @@ function updateAnim(t){
   document.getElementById('scrubber').max = dur;
   document.getElementById('scrubber').value = t;
 
-  const segTimeDisp = document.getElementById('seg-time-display');
-  if(segTimeDisp) segTimeDisp.textContent = t.toFixed(2) + 's';
-
   const totals=computeTotals(t);
-  const order=[...members.map((_,i)=>i)].sort((a,b)=>totals[b]-totals[a]);
-
+  
+  // Rueda en vivo
   drawLiveDonut(totals);
+
+  const order=[...members.map((_,i)=>i)].sort((a,b)=>totals[b]-totals[a]);
 
   const actives = segments.filter(s => t >= s.start && t < s.end);
   let activeSingers = new Set();
@@ -863,54 +1006,53 @@ function updateAnim(t){
       updateActiveKaraoke(visibleEvents, t);
   }
 
-  // Lógica "is typing..."
-  let recentSingers = [];
+  // --- LÓGICA CONJUNTA "IS TYPING" ---
+  let recentSingersDisplay = [];
   if (actives.length > 0) {
-    recentSingers = actives.map(s => s.memberId);
+      actives.forEach(s => {
+          recentSingersDisplay.push(...getDisplayMembers(s.memberId));
+      });
   } else {
-    const past = segments.filter(s => s.end <= t);
-    if (past.length > 0) {
-      const latestEnd = Math.max(...past.map(s => s.end));
-      recentSingers = past.filter(s => s.end === latestEnd).map(s => s.memberId);
-    }
+      const past = segments.filter(s => s.end <= t);
+      if (past.length > 0) {
+          const latestEnd = Math.max(...past.map(s => s.end));
+          const latestSegs = past.filter(s => s.end === latestEnd);
+          latestSegs.forEach(s => {
+              recentSingersDisplay.push(...getDisplayMembers(s.memberId));
+          });
+      }
   }
 
   let typingHTML = '';
-  const upcoming = segments.filter(s => s.start > t && s.start <= t + 5);
+  const upcomingBubbles = chatEvents.filter(e => e.type === 'bubble' && e.start > t && e.start <= t + 5);
   
-  if (upcoming.length > 0) {
-    const nextStart = Math.min(...upcoming.map(s => s.start));
-    const nextGroup = upcoming.filter(s => s.start === nextStart);
-    const uniqueTyperIds = [...new Set(nextGroup.map(s => s.memberId))].filter(id => !recentSingers.includes(id));
-    
-    if (uniqueTyperIds.length > 0) {
-      let numPeople = 0;
-      const namesHTML = uniqueTyperIds.map(id => {
-        const m = members[id] || members[0] || {color:'#000'};
-        const nameStr = m && m.name ? String(m.name) : '';
-        let displayName = nameStr;
-        if (nameStr === 'ALL') {
-           displayName = 'Everyone'; numPeople += 2;
-        } else if (nameStr.includes('+')) {
-           numPeople += nameStr.split('+').length;
-        } else {
-           numPeople += 1;
-        }
-        return `<span style="color:${m.color}; font-weight:600;">${displayName}</span>`;
-      }).join(', ');
+  if (upcomingBubbles.length > 0) {
+      const nextBubble = upcomingBubbles[0].bubble;
+      let nextGroupIds = [];
+      nextBubble.segments.forEach(seg => {
+          nextGroupIds.push(...getDisplayMembers(seg.memberId));
+      });
       
-      const verb = numPeople > 1 ? 'are typing...' : 'is typing...';
-      typingHTML = `<span class="typing-anim">${namesHTML} ${verb}</span>`;
-    }
+      const uniqueTyperIds = [...new Set(nextGroupIds)].filter(id => !recentSingersDisplay.includes(id));
+      
+      if (uniqueTyperIds.length > 0) {
+          const namesHTML = uniqueTyperIds.map(id => {
+              const m = members[id] || members[0] || {color:'#000'};
+              return `<span style="color:${m.color}; font-weight:600;">${m.name}</span>`;
+          }).join(' <span style="color:var(--color-text-secondary);">&</span> ');
+          
+          const verb = uniqueTyperIds.length > 1 ? 'are typing...' : 'is typing...';
+          typingHTML = `<span class="typing-anim">${namesHTML} <span style="color:var(--color-text-secondary);">${verb}</span></span>`;
+      }
   }
 
   const typingDiv = document.getElementById('typing-indicator');
   if (typingDiv) {
-    if (typingHTML !== prevTypingHTML) {
-        typingDiv.innerHTML = typingHTML;
-        prevTypingHTML = typingHTML;
-    }
-    typingDiv.style.opacity = typingHTML ? 1 : 0;
+      if (typingHTML !== prevTypingHTML) {
+          typingDiv.innerHTML = typingHTML;
+          prevTypingHTML = typingHTML;
+      }
+      typingDiv.style.opacity = typingHTML ? 1 : 0;
   }
 }
 
@@ -952,7 +1094,7 @@ function togglePlay(){
   playing=!playing;
   
   if(playing){
-    document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-pause"></i> Pause');
+    document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-pause"></i> Pausa');
     lastTS=null;
     if(ytPlayer && typeof ytPlayer.playVideo === 'function') {
        ytPlayer.seekTo(curTime, true);
@@ -1115,8 +1257,11 @@ function animateDonut(canvas,targets,totals,total,frame){
   
   let startAngle=-Math.PI/2;
   const GAP=0.018;
-  members.forEach((m,i)=>{
-    if(!isDisplayableMember(m)) return;
+  
+  const order = [...members.map((_,i)=>i)].filter(i => isDisplayableMember(members[i])).sort((a,b)=> totals[b] - totals[a]);
+
+  order.forEach(i=>{
+    const m = members[i];
     const sweep=Math.max(donutAngles[i]-GAP,0);
     if(sweep<=0)return;
     ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,R,startAngle,startAngle+sweep); ctx.closePath();
@@ -1170,7 +1315,7 @@ function importData(e) {
       
       if (data.members && Array.isArray(data.members)) {
           members = data.members.filter(m => m !== null && typeof m === 'object');
-          if(members.length === 0) members.push({name:'Cantante', color:'#7F77DD', avatar:''});
+          if(members.length === 0) members.push({name:'Cantante', group:'', color:'#7F77DD', avatar:''});
           members.forEach(m => {
              m.name = m.name ? String(m.name) : 'Desconocido';
              m.group = m.group ? String(m.group) : '';
