@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Line Distribution Editor</title>
+<title>Line Distribution Editor - Visual Update</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
 <style>
 :root {
@@ -16,30 +16,30 @@
   --color-text-secondary: #888780;
 }
 body.dark-theme {
-  --color-background-primary: #1a1a18;
-  --color-background-secondary: #2c2c2a;
+  --color-background-primary: #252525;
+  --color-background-secondary: #1a1a18;
   --color-background-tertiary: #3a3a38;
   --color-border-secondary: #4a4a4a;
   --color-border-tertiary: #333333;
   --color-text-primary: #e8e6de;
-  --color-text-secondary: #666666;
+  --color-text-secondary: #a0a098;
 }
 
-body { font-family: system-ui, -apple-system, sans-serif; background: var(--color-background-primary); color: var(--color-text-primary); transition: background 0.3s, color 0.3s; }
+body { font-family: system-ui, -apple-system, sans-serif; background: var(--color-background-secondary); color: var(--color-text-primary); transition: background 0.3s, color 0.3s; margin: 0; }
 *{box-sizing:border-box;margin:0;padding:0;}
-.tabs{display:flex;gap:4px;margin-bottom:1rem;}
+.tabs{display:flex;gap:4px;margin-bottom:1rem; padding: 1rem 1rem 0 1rem;}
 .tab{font-size:13px;padding:6px 14px;border-radius:8px;border:0.5px solid var(--color-border-tertiary);background:transparent;color:var(--color-text-secondary);cursor:pointer;}
-.tab.active{background:var(--color-text-primary);color:var(--color-background-primary);border-color:transparent;}
-.panel{display:none;}.panel.active{display:block;}
+.tab.active{background:var(--color-text-primary);color:var(--color-background-secondary);border-color:transparent;}
+.panel{display:none; padding: 1rem;}.panel.active{display:block;}
 .card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:.85rem 1rem;margin-bottom:.6rem;}
 .stitle{font-size:12px;font-weight:500;color:var(--color-text-secondary);letter-spacing:.05em;text-transform:uppercase;margin-bottom:.6rem;}
 input[type=text],input[type=number],select,textarea{font-size:13px;border:0.5px solid var(--color-border-secondary);border-radius:8px;padding:5px 9px;background:var(--color-background-secondary);color:var(--color-text-primary);}
 textarea{resize:vertical;padding:8px;}
-.btn{font-size:13px;padding:6px 13px;border-radius:8px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);cursor:pointer;display:inline-flex;align-items:center;gap:4px;}
+.btn{font-size:13px;padding:6px 13px;border-radius:8px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);cursor:pointer;display:inline-flex;align-items:center;gap:4px;}
 .btn:hover{background:var(--color-background-tertiary);}
-.btn-p{background:var(--color-text-primary);color:var(--color-background-primary);border-color:transparent;}
+.btn-p{background:var(--color-text-primary);color:var(--color-background-secondary);border-color:transparent;}
 .btn-p:hover{opacity:.85;}
-.btn-d{color:#E24B4A;border-color:#E24B4A33;}
+.btn-d{color:#E24B4A;border-color:#E24B4A33;background:transparent;}
 .btn-d:hover{background:#FCEBEB;}
 
 /* Grid ajustado */
@@ -57,101 +57,153 @@ textarea{resize:vertical;padding:8px;}
 .swatch.on{border-color:var(--color-text-primary);}
 .hint{font-size:12px;color:var(--color-text-secondary);margin-top:5px;}
 
-/* Split Layout Avanzado y ajustado a la altura de la pantalla */
+/* Escenario Fijo de Animación */
+#anim-stage {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  height: calc(100vh - 200px);
+  min-height: 500px;
+  display: flex;
+  margin-bottom: 1rem;
+}
+
+/* Capa de Fondo - Solo afecta a la animación */
+#anim-bg-layer {
+  position: absolute; top:0; left:0; right:0; bottom:0;
+  background-color: #FFD166; /* Amarillo predeterminado */
+  background-size: cover; background-position: center;
+  z-index: 0;
+}
+
+/* Split Layout 3 Columnas */
 #split-layout { 
   display: flex; 
-  gap: 16px; 
-  height: calc(100vh - 200px); 
-  min-height: 500px; 
-  margin-bottom: 1rem; 
+  gap: 0; 
+  flex: 1;
   align-items: stretch; 
+  position: relative;
+  z-index: 1;
+  width: 100%;
 }
-#left-panel { flex: 1; min-width: 320px; display: flex; flex-direction: column; gap: 16px; }
 
-/* Contenedor de Youtube a 16:9 estricto para eliminar marcos negros laterales */
+/* Columnas con Scroll interno */
+#left-panel { flex: 1; position: relative; z-index: 2; display: flex; flex-direction: column; padding: 1.5rem 20px; overflow-y: auto; }
+#center-panel { 
+  flex: 1.5; 
+  position: relative; 
+  z-index: 2; 
+  display: flex; 
+  flex-direction: column; 
+  justify-content: center;
+  gap: 20px; 
+  align-items: center; 
+  padding: 1.5rem 20px; 
+  background-color: var(--color-background-primary); /* Franja Blanca/Negra */
+}
+#right-panel { flex: 1; position: relative; z-index: 2; display: flex; flex-direction: column; padding: 1.5rem 20px; overflow: hidden; height: 100%; }
+
+/* Contenedor de Youtube a 16:9 estricto */
 #yt-container { 
   width: 100%;
   aspect-ratio: 16 / 9;
-  border-radius: 12px; 
+  border-radius: 16px; 
   overflow: hidden; 
   background: #000; 
-  border: 1px solid var(--color-border-tertiary); 
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15); 
+  flex-shrink: 0;
 }
-#chat-wrap { flex: 1; position:relative; border-radius:12px; overflow:hidden; border:1px solid var(--color-border-tertiary); display: flex; flex-direction: column;}
-#right-panel { flex: 1; min-width: 320px; position: relative; border-radius: 12px; border: 1px solid var(--color-border-tertiary); overflow: hidden; display: flex; flex-direction: column; }
 
-.custom-bg { position:absolute; top:0; left:0; right:0; bottom:0; background-size:cover; background-position:center; z-index:0; }
-.custom-overlay { position:absolute; top:0; left:0; right:0; bottom:0; background:transparent; z-index:1; transition:background 0.3s; }
-.content-z { position:relative; z-index:2; height:100%; display:flex; flex-direction:column; overflow:hidden; }
+.anim-box {
+  background: var(--color-background-primary);
+  border-radius: 14px;
+  padding: 10px 14px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  color: var(--color-text-primary);
+}
 
-/* BARRAS: Grid dinámico para alinear todo independientemente del texto */
-#bars-container { position: relative; width: 100%; --name-w: 120px; }
+/* BARRAS: Grid alineado forzando el ancho de los nombres */
+#bars-container { 
+  position: relative; width: 100%; margin: auto 0; /* Auto margin para centrar dinámicamente */
+}
 .hbar-row {
   position: absolute;
-  left: 0; right: 0; height: 38px;
-  display: grid;
-  grid-template-columns: var(--name-w) 1fr 38px;
-  gap: 10px; align-items: center;
-  transition: transform 0.4s ease-out, filter 1s ease, opacity 1s ease;
+  left: 0; right: 0; height: 46px; /* Altura de la tarjeta */
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), filter 1s ease, opacity 1s ease;
+  will-change: transform;
 }
 .hbar-name {
-  font-size: 13px; font-weight: 600;
-  text-align: right; text-shadow: 0px 1px 3px rgba(0,0,0,0.3);
-  display: flex; justify-content: flex-end; align-items: center; gap: 6px;
-  white-space: normal; line-height: 1.2; word-break: break-word;
+  font-size: 13px; font-weight: 700;
+  display: flex; align-items: center; gap: 6px;
+  width: 100px;
+  overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  flex-shrink: 0;
 }
 .hbar-track {
-  flex:1;background:var(--color-background-primary);border-radius:6px;height:24px;overflow:hidden;
-  border:0.5px solid var(--color-border-tertiary); 
-  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+  flex:1;background:var(--color-background-secondary);border-radius:20px;height:12px;overflow:hidden;
   transition: box-shadow 0.3s ease, border-color 0.3s ease; 
 }
-.hbar-fill {height:100%;border-radius:4px;width:0%;} 
-.hbar-secs {font-size:12px;text-align:right;flex-shrink:0;color:var(--color-text-primary); font-weight:500;}
+.hbar-fill {height:100%;border-radius:20px;width:0%; transition: width 0.1s linear;} 
+.hbar-secs {font-size:12px;text-align:right;flex-shrink:0;color:var(--color-text-primary); font-weight:700; min-width:35px;}
 
-/* CHAT Y ANIMACIONES */
-#chat-history { flex: 1; padding: 1.25rem; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; scroll-behavior: smooth; }
-#typing-indicator-wrap { padding: 0.75rem 1.25rem; border-top: 1px solid rgba(128,128,128,0.2); min-height: 48px; }
-
-@keyframes typingPulse {
-  0% { opacity: 0.7; }
-  50% { opacity: 1; }
-  100% { opacity: 0.7; }
+/* SEMÁFORO (STATUS) */
+.status-dot {
+  width: 12px; height: 12px; border-radius: 50%;
+  position: absolute; bottom: -2px; right: -2px;
+  border: 2px solid var(--color-text-primary);
+  background-color: #f1c40f; 
+  transition: background-color 0.3s ease;
+  z-index: 10;
 }
+
+/* CHAT Y ANIMACIONES (Forzando Scroll Up) */
+#chat-history { 
+  flex: 1 1 0; /* Permite que el bloque respete la altura del panel derecho y haga scroll */
+  min-height: 0;
+  overflow-y: auto; 
+  display: flex; 
+  flex-direction: column; 
+  gap: 12px; 
+  scroll-behavior: smooth; 
+  padding-right: 6px; 
+}
+#typing-indicator-wrap { padding: 0.5rem 0; min-height: 30px; flex-shrink:0; }
+
+@keyframes typingPulse { 0% { opacity: 0.7; } 50% { opacity: 1; } 100% { opacity: 0.7; } }
 .typing-anim { animation: typingPulse 1.5s infinite ease-in-out; }
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(15px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
-#scrubber-row{display:flex;align-items:center;gap:10px;margin:1rem 0 .75rem;}
+.anim-controls { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom: 12px;}
+#scrubber-row{display:flex;align-items:center;gap:10px;margin-bottom: .75rem;}
 #scrubber{flex:1;}
 #time-label{font-size:13px;color:var(--color-text-secondary);min-width:80px;text-align:right; font-family:monospace;}
-.ctrl-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
 
 /* Barras de scroll limpias */
 #chat-history::-webkit-scrollbar { width: 6px; }
 #chat-history::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 4px; }
-#bars-container::-webkit-scrollbar { width: 6px; }
-#bars-container::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 4px; }
+#left-panel::-webkit-scrollbar { width: 6px; }
+#left-panel::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 4px; }
 
-/* Ocultar menús al grabar pantalla */
+/* Ocultar menús y ocultar el RATÓN al grabar pantalla */
 body.recording-active .tabs,
-body.recording-active #tab-animate > div:first-child,
+body.recording-active .anim-controls,
 body.recording-active #scrubber-row,
 body.recording-active .ctrl-row {
   display: none !important;
 }
-body.recording-active #split-layout {
+body.recording-active #anim-stage {
   height: 100vh !important;
   margin: 0 !important;
+  border-radius: 0;
+}
+/* OCULTAR CURSOR DURANTE GRABACIÓN */
+body.recording-active, body.recording-active * {
+  cursor: none !important;
 }
 </style>
 </head>
 <body>
 
-<div style="padding:1rem;">
 <div class="tabs">
   <button class="tab active" onclick="sw('members')">1. Miembros</button>
   <button class="tab" onclick="sw('segments')">2. Segmentos</button>
@@ -214,48 +266,50 @@ body.recording-active #split-layout {
 </div>
 
 <div id="tab-animate" class="panel">
-  <div style="margin-bottom:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+  <div class="anim-controls">
     <button class="btn" onclick="toggleTheme()"><i class="ti ti-moon"></i> Tema Oscuro/Claro</button>
-    <label class="btn" style="cursor:pointer;">
-      <i class="ti ti-photo"></i> Poner Fondo Gráfica
-      <input type="file" accept="image/*" style="display:none;" onchange="setBgImage(event)">
-    </label>
-    <button class="btn btn-d" onclick="recordScreen()"><i class="ti ti-video"></i> Exportar / Grabar Pestaña</button>
+    
+    <!-- Selector Combinado: Color y Foto de Fondo -->
+    <div style="display:flex; align-items:center; gap:8px; background:var(--color-background-primary); padding:4px 8px; border-radius:8px; border:0.5px solid var(--color-border-secondary);">
+      <input type="color" id="bg-color-picker" value="#FFD166" onchange="setBgColor(this.value)" style="width:24px; height:24px; padding:0; border:none; border-radius:4px; cursor:pointer;" title="Color de Fondo">
+      <div style="width:1px; height:16px; background:var(--color-border-secondary);"></div>
+      <label style="font-size:13px; cursor:pointer; color:var(--color-text-primary); display:flex; align-items:center; gap:4px;">
+        <i class="ti ti-photo"></i> Foto
+        <input type="file" accept="image/*" style="display:none;" onchange="setBgImage(event)">
+      </label>
+    </div>
+
+    <button class="btn btn-d" onclick="recordScreen()"><i class="ti ti-video"></i> Grabar Pestaña</button>
     <span id="ticker-time" style="font-size:12px;color:var(--color-text-secondary);font-family:monospace;background:var(--color-background-secondary);padding:6px 10px;border-radius:6px; margin-left:auto;">0.00s</span>
   </div>
 
-  <div id="split-layout">
-    <div id="left-panel">
-      <div id="yt-container">
-        <div id="yt-player"></div>
+  <div id="anim-stage">
+    <div id="anim-bg-layer"></div>
+    <div id="split-layout">
+      <!-- Izquierda: Barras -->
+      <div id="left-panel">
+        <div id="bars-container"></div>
       </div>
-      <div id="chat-wrap">
-        <div class="custom-bg"></div>
-        <div class="custom-overlay"></div>
-        <div class="content-z">
-          <div id="chat-history"></div>
-          <div id="typing-indicator-wrap">
-            <div id="typing-indicator" style="font-size:13px; color:var(--color-text-secondary); min-height:18px; opacity:0; transition: opacity 0.3s; font-style:italic;"></div>
-          </div>
+      
+      <!-- Centro: Youtube y Rueda -->
+      <div id="center-panel">
+        <div id="yt-container">
+          <div id="yt-player"></div>
         </div>
-      </div>
-    </div>
-    
-    <div id="right-panel">
-      <div class="custom-bg"></div>
-      <div class="custom-overlay"></div>
-      <div class="content-z" style="display:flex; flex-direction:column; padding: 1.25rem; overflow:hidden;">
-        
-        <div id="live-stats-container" style="display:flex; justify-content:center; align-items:center; padding-bottom:15px; margin-bottom:15px; flex-shrink:0;">
-            <div style="position:relative; width:150px; height:150px;">
-                <canvas id="live-donut-canvas" width="150" height="150" style="position:absolute; top:0; left:0;"></canvas>
+        <div id="live-stats-container" style="display:flex; justify-content:center; align-items:center; flex:1; width:100%;">
+            <div style="position:relative; width:180px; height:180px;">
+                <canvas id="live-donut-canvas" width="180" height="180" style="position:absolute; top:0; left:0;"></canvas>
                 <div id="live-donut-center" style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
                 </div>
             </div>
         </div>
-
-        <div id="bars-container-wrap" style="flex:1; overflow-y:auto; padding-right:8px;">
-          <div id="bars-container"></div>
+      </div>
+      
+      <!-- Derecha: Lyrics que scrollean -->
+      <div id="right-panel">
+        <div id="chat-history"></div>
+        <div id="typing-indicator-wrap">
+          <div id="typing-indicator" style="font-size:13px; color:var(--color-text-secondary); opacity:0; transition: opacity 0.3s; font-style:italic;"></div>
         </div>
       </div>
     </div>
@@ -265,7 +319,6 @@ body.recording-active #split-layout {
     <input type="range" id="scrubber" min="0" max="200" value="0" step="0.01" oninput="scrub(+this.value)" />
     <span id="time-label">0:00 / 0:00</span>
   </div>
-  
   <div class="ctrl-row">
     <button class="btn btn-p play-toggle-btn" onclick="togglePlay()"><i class="ti ti-player-play"></i> Play</button>
     <button class="btn" onclick="resetAnim()"><i class="ti ti-refresh"></i> Reiniciar</button>
@@ -293,7 +346,6 @@ body.recording-active #split-layout {
   </div>
   <div id="stats-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-top:1.25rem;"></div>
 </div>
-</div>
 
 <script src="https://www.youtube.com/iframe_api"></script>
 
@@ -310,7 +362,6 @@ const PAL=[
 let members=[
   {name:'Jin', group:'', color:PAL[0], avatar:''},
   {name:'Suga', group:'', color:PAL[1], avatar:''},
-  {name:'J-Hope', group:'', color:PAL[2], avatar:''},
   {name:'ALL', group:'', color:PAL[8], avatar:''}, 
 ];
 let segments=[
@@ -323,7 +374,8 @@ let displayWidths=[], displayOrders=[];
 let donutAngles=[], donutAnimId=null;
 let liveDonutAngles=[];
 let activeCapIdx = 0; 
-let projectBg = '';
+let projectBg = ''; 
+let projectBgColor = '#FFD166'; 
 let currentVideoId = '';
 
 let chatEvents = [];
@@ -370,11 +422,11 @@ function onPlayerReady(event) { document.getElementById('song-dur').value = Math
 function onPlayerStateChange(event) {
   if (event.data == YT.PlayerState.PLAYING && !playing) {
     playing = true;
-    document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-pause"></i> Pausa');
+    document.querySelectorAll('.play-toggle-btn').forEach(btn => document.querySelectorAll('.play-toggle-btn').innerHTML='<i class="ti ti-player-pause"></i> Pausa');
     animId = requestAnimationFrame(loop);
   } else if ((event.data == YT.PlayerState.PAUSED || event.data == YT.PlayerState.ENDED) && playing) {
     playing = false;
-    document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-play"></i> Play');
+    document.querySelectorAll('.play-toggle-btn').forEach(btn => document.querySelectorAll('.play-toggle-btn').innerHTML='<i class="ti ti-player-play"></i> Play');
     if(animId) cancelAnimationFrame(animId);
   }
 }
@@ -402,18 +454,38 @@ function captureT(index, prop) {
 
 function changeSpeed(val) { playSpeed = +val; if(ytPlayer && ytPlayer.setPlaybackRate) ytPlayer.setPlaybackRate(playSpeed); }
 
-// --- UI PRINCIPAL ---
-function applyBg() {
-  if(!projectBg) return;
-  document.querySelectorAll('.custom-bg').forEach(el => el.style.backgroundImage = `url(${projectBg})`);
-  document.querySelectorAll('.custom-overlay').forEach(el => el.style.background = 'transparent');
+// --- UI BACKGROUND MANAGER ---
+function setBgColor(val) {
+  projectBg = ''; 
+  projectBgColor = val;
+  applyBg();
 }
 
 function setBgImage(e) {
   const file = e.target.files[0]; if(!file) return;
   const reader = new FileReader();
-  reader.onload = ev => { projectBg = ev.target.result; applyBg(); };
+  reader.onload = ev => { 
+    projectBgColor = ''; 
+    projectBg = ev.target.result; 
+    applyBg(); 
+  };
   reader.readAsDataURL(file);
+}
+
+function applyBg() {
+  const layer = document.getElementById('anim-bg-layer');
+  if(!layer) return;
+  
+  if (projectBg) {
+    layer.style.backgroundImage = `url(${projectBg})`;
+    layer.style.backgroundColor = 'transparent';
+  } else if (projectBgColor) {
+    layer.style.backgroundImage = 'none';
+    layer.style.backgroundColor = projectBgColor;
+  } else {
+    layer.style.backgroundImage = 'none';
+    layer.style.backgroundColor = 'transparent';
+  }
 }
 
 function handleAvatarUpload(e, i) {
@@ -437,11 +509,13 @@ function dDrop(e, i) {
 function dEnd(e) { e.target.style.opacity = '1'; draggedIdx = null; }
 
 function sw(name){
-  const ns=['members','segments','animate','stats'];
-  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',ns[i]===name));
+  document.querySelectorAll('.tab').forEach((t,i)=>{
+    const arr = ['members', 'segments', 'animate', 'stats'];
+    t.classList.toggle('active', arr[i]===name);
+  });
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
-  if(name==='animate'){initDisplayState();buildBars();updateAnim(curTime);}
+  if(name==='animate'){applyBg(); initDisplayState();buildBars();updateAnim(curTime);}
   if(name==='stats')renderStats();
 }
 
@@ -493,7 +567,6 @@ function getDisplayMembers(memberId) {
         });
         if(included.length > 0) return included;
     }
-    // Para 'ALL' u otros, no desplegamos, así se visualiza solo su círculo/avatar original
     return [memberId];
 }
 
@@ -612,7 +685,7 @@ function renderS(){
         <button class="btn" onclick="captureT(${i}, 'end')" style="padding:4px 6px;" title="Capturar Tiempo"><i class="ti ti-clock"></i></button>
       </div>
       <div style="display:flex; flex-direction:column; gap:4px;">
-        <input type="text" placeholder="Letra (Pon + al inicio para fusionar)" value="${s.lyric}" onchange="segments[${i}].lyric=this.value;buildChatEvents();" />
+        <input type="text" placeholder="Letra (+ para fusionar con la anterior)" value="${s.lyric}" onchange="segments[${i}].lyric=this.value;buildChatEvents();" />
         <input type="text" placeholder="Traducción (Opcional)" value="${s.translation||''}" onchange="segments[${i}].translation=this.value;buildChatEvents();" />
       </div>
       <select onchange="segments[${i}].memberId=+this.value;this.style.borderLeft='3px solid '+(members[+this.value]||members[0]).color;buildChatEvents();" style="border-left:3px solid ${m.color};width:100%;height:100%;">${mopts(s.memberId)}</select>
@@ -664,49 +737,51 @@ function computeTotals(t){
   return totals;
 }
 
-// --- ALINEACIÓN DINÁMICA DE BARRAS ---
+// --- ALINEACIÓN DINÁMICA DE BARRAS EN CAJAS ---
 function buildBars(){
   const c = document.getElementById('bars-container');
   if(!c) return;
   c.innerHTML = '';
 
-  let maxW = 80;
-  const dummy = document.createElement('div');
-  dummy.style.cssText = 'position:absolute;visibility:hidden;font-size:13px;font-weight:600;display:inline-block;white-space:nowrap;';
-  document.body.appendChild(dummy);
-
-  members.forEach((m,i)=>{
-    if(!isDisplayableMember(m)) return;
-    dummy.textContent = m.name;
-    maxW = Math.max(maxW, dummy.offsetWidth + (m.avatar ? 38 : 15));
-  });
-  document.body.removeChild(dummy);
-  c.style.setProperty('--name-w', Math.ceil(maxW + 10) + 'px');
+  const ROW_HEIGHT = 58; // Altura de la tarjeta
+  const activeCount = members.filter(m => isDisplayableMember(m)).length;
+  c.style.height = (activeCount * ROW_HEIGHT) + 'px';
 
   members.forEach((m,i)=>{
     if(!isDisplayableMember(m)) return; 
     let avatarHTML = m.avatar 
-       ? `<img src="${m.avatar}" style="width:22px;height:22px;border-radius:50%;object-fit:cover; border:1.5px solid ${m.color}; background:var(--color-background-primary); flex-shrink:0;">` 
-       : '';
-    const row=document.createElement('div');row.className='hbar-row';row.id='hrow-'+i;
+       ? `<img src="${m.avatar}" style="width:30px;height:30px;border-radius:50%;object-fit:cover; border:1px solid ${m.color}; background:var(--color-background-primary); flex-shrink:0;">` 
+       : `<div style="width:30px;height:30px;border-radius:50%;background:${m.color}; flex-shrink:0;"></div>`;
+    
+    const row=document.createElement('div');
+    row.className='hbar-row';
+    row.id='hrow-'+i;
+    
+    // Las Cajas tipo Tarjeta (Anim-Box)
     row.innerHTML=`
-      <div class="hbar-name" id="hname-${i}" style="color:${m.color};">
-        <span>${m.name}</span>${avatarHTML}
-      </div>
-      <div class="hbar-track"><div class="hbar-fill" id="hfill-${i}" style="background:${m.color};"></div></div>
-      <div class="hbar-secs" id="hsecs-${i}">0.0s</div>`;
+      <div class="anim-box" style="display:flex; align-items:center; gap:12px; width:100%; height:46px; box-sizing:border-box;">
+          <div style="position:relative; flex-shrink:0; display:flex;">
+              ${avatarHTML}
+              <div id="status-${i}" class="status-dot"></div>
+          </div>
+          <div class="hbar-name" id="hname-${i}" style="color:${m.color}; flex-shrink:0; width:110px; text-align:left; justify-content:flex-start;">
+            <span>${m.name}</span>
+          </div>
+          <div class="hbar-track" style="flex:1;"><div class="hbar-fill" id="hfill-${i}" style="background:${m.color};"></div></div>
+          <div class="hbar-secs" id="hsecs-${i}" style="min-width:35px; color:var(--color-text-primary);">0.0s</div>
+      </div>`;
     c.appendChild(row);
   });
 }
 
 function lerp(a,b,t){return a+(b-a)*t;}
 
-// --- FUNCIONES DEL LIVE DONUT Y CHAT CON BUBBLES ---
+// --- FUNCIONES DEL LIVE DONUT Y CHAT CON BUBBLES EN CAJAS ---
 function drawLiveDonut(totals) {
   const canvas = document.getElementById('live-donut-canvas');
   if(!canvas) return;
   const ctx = canvas.getContext('2d');
-  const W = canvas.width, H = canvas.height, cx = W/2, cy = H/2, R = 72, r = 52;
+  const W = canvas.width, H = canvas.height, cx = W/2, cy = H/2, R = 75, r = 55;
   
   const validTotals = totals.filter((_, i) => isDisplayableMember(members[i]));
   const liveTotal = validTotals.reduce((a,b)=>a+b,0) || 1;
@@ -747,13 +822,13 @@ function drawLiveDonut(totals) {
   const centerDiv = document.getElementById('live-donut-center');
   if (centerDiv && topMember && maxTotal > 0) {
       let avHTML = topMember.avatar 
-          ? `<img src="${topMember.avatar}" style="width:44px;height:44px;border-radius:50%;object-fit:cover; border:2px solid ${topMember.color}; margin-bottom:2px;">` 
-          : `<div style="width:44px;height:44px;border-radius:50%;background:${topMember.color}; margin-bottom:2px;"></div>`;
+          ? `<img src="${topMember.avatar}" style="width:48px;height:48px;border-radius:50%;object-fit:cover; border:2px solid ${topMember.color}; margin-bottom:4px;">` 
+          : `<div style="width:48px;height:48px;border-radius:50%;background:${topMember.color}; margin-bottom:4px;"></div>`;
       
       centerDiv.innerHTML = `
           ${avHTML}
-          <div style="font-weight:700; font-size:18px; line-height:1; color:var(--color-text-primary); text-shadow:0px 1px 2px rgba(0,0,0,0.2);">${pctTop}%</div>
-          <div style="font-size:10px; color:var(--color-text-secondary); text-transform:uppercase; letter-spacing:0.05em; max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-shadow:0px 1px 2px rgba(0,0,0,0.2);">${topMember.name}</div>
+          <div style="font-weight:700; font-size:22px; line-height:1; color:var(--color-text-primary); text-shadow:0px 1px 2px rgba(0,0,0,0.2);">${pctTop}%</div>
+          <div style="font-size:11px; color:var(--color-text-primary); text-transform:uppercase; letter-spacing:0.05em; max-width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-shadow:0px 1px 2px rgba(0,0,0,0.2);">${topMember.name}</div>
       `;
   } else if (centerDiv) {
       centerDiv.innerHTML = '';
@@ -776,7 +851,6 @@ function buildChatEvents() {
   const validFinalTotals = finalTotals.filter((_, i) => isDisplayableMember(members[i]));
   globalMaxT = Math.max(validFinalTotals.length > 0 ? Math.max(...validFinalTotals) : 0, 1);
 
-  // AGRUPACIÓN DE BURBUJAS (BUBBLES)
   let bubbles = [];
   let currentBubble = null;
 
@@ -794,8 +868,14 @@ function buildChatEvents() {
           let sameMember = seg.memberId === prevSeg.memberId;
           let gap = seg.start - currentBubble.end;
           
-          // Agrupar si empieza por '+' o si es el mismo miembro y la pausa es de menos de 2.5 seg
-          if (isPlus || (sameMember && gap < 2.5)) {
+          // Contamos las líneas visuales actuales en la burbuja (excluyendo las fusionadas con '+')
+          let visualLines = currentBubble.segments.filter(s => !(s.lyric || '').trim().startsWith('+')).length;
+          
+          if (isPlus) {
+              currentBubble.segments.push(seg);
+              currentBubble.end = Math.max(currentBubble.end, seg.end);
+          } else if (sameMember && gap < 2.5 && visualLines < 4) {
+              // Si es el mismo miembro, hay poco hueco y no superamos 4 líneas visuales, lo metemos en la burbuja
               currentBubble.segments.push(seg);
               currentBubble.end = Math.max(currentBubble.end, seg.end);
           } else {
@@ -844,7 +924,6 @@ function renderChatHistory(visibleEvents, t) {
           
           let allIncludedIds = [];
           b.segments.forEach(seg => {
-              // Usamos getDisplayMembers para que si es ALL o Group no se descomponga visualmente
               const inc = getDisplayMembers(seg.memberId);
               allIncludedIds.push(...inc);
           });
@@ -853,8 +932,8 @@ function renderChatHistory(visibleEvents, t) {
           
           let avatarsHtml = bubbleMembers.map(m => {
               return m.avatar 
-                  ? `<img src="${m.avatar}" style="width:20px;height:20px;border-radius:50%;object-fit:cover; border:1.5px solid ${m.color}">` 
-                  : `<div style="width:14px;height:14px;border-radius:50%;background:${m.color}; border:1.5px solid ${m.color}"></div>`;
+                  ? `<img src="${m.avatar}" style="width:24px;height:24px;border-radius:50%;object-fit:cover; border:1.5px solid ${m.color}">` 
+                  : `<div style="width:24px;height:24px;border-radius:50%;background:${m.color}; border:1.5px solid ${m.color}"></div>`;
           }).join('');
           
           let namesHtml = bubbleMembers.map(m => `<span style="color:${m.color};">${m.name}</span>`).join(' <span style="color:var(--color-text-secondary)">&</span> ');
@@ -877,27 +956,28 @@ function renderChatHistory(visibleEvents, t) {
                   bgStyle = `background: ${gradient}; -webkit-background-clip: text; -webkit-text-fill-color: transparent; color: transparent;`;
               }
               
-              let spanHtml = `<span id="lyric-text-${seg.originalIndex}" style="font-size:18px;letter-spacing:.01em;font-weight:700; display:inline-block; ${bgStyle}">${text}</span>`;
+              let spanHtml = `<span id="lyric-text-${seg.originalIndex}" style="font-size:16px;letter-spacing:.01em;font-weight:700; display:inline-block; ${bgStyle}">${text}</span>`;
               
               if (isPlus && i > 0) {
                   linesHtml += `&nbsp;${spanHtml}`;
               } else {
                   if(i > 0) linesHtml += `</div>`; 
-                  linesHtml += `<div style="min-height:24px; margin-top:2px; line-height:1.3;">${spanHtml}`;
+                  linesHtml += `<div style="min-height:22px; margin-top:2px; line-height:1.3;">${spanHtml}`;
               }
           });
           if(b.segments.length > 0) linesHtml += `</div>`; 
           
           let transHtml = '';
           b.segments.forEach(seg => {
-              if (seg.translation) transHtml += `<div style="font-size:13px; color:var(--color-text-secondary); margin-top:2px; font-weight:400;">${seg.translation}</div>`;
+              if (seg.translation) transHtml += `<div style="font-size:12px; color:var(--color-text-secondary); margin-top:2px; font-weight:400;">${seg.translation}</div>`;
           });
 
+          // EL MENSAJE EN UNA CAJA (ANIM-BOX)
           html += `
-            <div style="margin-bottom: 12px; ${animStyle}">
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-                ${avatarsHtml}
-                <span style="font-size:13px;font-weight:600;text-transform:uppercase;">${namesHtml}</span>
+            <div class="anim-box" style="margin-bottom: 0px; flex-shrink: 0; ${animStyle}">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                <div style="display:flex; gap:4px;">${avatarsHtml}</div>
+                <span style="font-size:12px;font-weight:700;text-transform:uppercase;">${namesHtml}</span>
               </div>
               ${linesHtml}
               ${transHtml}
@@ -906,7 +986,7 @@ function renderChatHistory(visibleEvents, t) {
       } else if (ev.type === 'leave') {
           let names = ev.members.filter(id => members[id]).map(id => `<span style="color:${members[id].color};font-weight:600;">${members[id].name}</span>`).join(' and ');
           let verb = ev.members.length > 1 ? 'have left the chat' : 'left the chat';
-          html += `<div style="text-align:center; font-size:13px; color:var(--color-text-secondary); margin: 16px 0; font-style:italic; ${animStyle}">${names} ${verb}</div>`;
+          html += `<div style="text-align:center; font-size:12px; font-weight:600; color:var(--color-text-primary); margin: 4px 0; flex-shrink: 0; font-style:italic; ${animStyle}">${names} ${verb}</div>`;
       }
   });
   area.innerHTML = html;
@@ -948,17 +1028,15 @@ function updateAnim(t){
   document.getElementById('scrubber').value = t;
 
   const totals=computeTotals(t);
-  
-  // Rueda en vivo
-  drawLiveDonut(totals);
-
   const order=[...members.map((_,i)=>i)].sort((a,b)=>totals[b]-totals[a]);
+
+  drawLiveDonut(totals);
 
   const actives = segments.filter(s => t >= s.start && t < s.end);
   let activeSingers = new Set();
   actives.forEach(s => { getIncludedMembers(s.memberId).forEach(idx => activeSingers.add(idx)); });
 
-  const ROW_HEIGHT = 46;
+  const ROW_HEIGHT = 58; // Altura caja + margen
   members.forEach((m,i)=>{
     if(!isDisplayableMember(m)) return; 
     
@@ -970,16 +1048,26 @@ function updateAnim(t){
     fill.style.width=targetWidth.toFixed(2)+'%'; 
     secs.textContent=totals[i].toFixed(1)+'s';
     
+    const box = row.querySelector('.anim-box');
     const track = row.querySelector('.hbar-track');
+    const status = document.getElementById('status-'+i);
     
-    // GESTIÓN DEL RESPLANDOR (GLOW) BLANCO PARA EL QUE CANTA
-    if(activeSingers.has(i)) {
+    let isFinished = t > globalMaxEnds[i] && globalMaxEnds[i] > 0;
+    let isSinging = activeSingers.has(i);
+
+    if(status) {
+        if (isFinished) status.style.backgroundColor = '#E24B4A'; // Rojo
+        else if (isSinging) status.style.backgroundColor = '#1D9E75'; // Verde
+        else status.style.backgroundColor = '#F4C430'; // Amarillo
+    }
+
+    if(isSinging) {
        row.style.filter = 'grayscale(0%)';
        row.style.opacity = '1';
-       track.style.boxShadow = '0 0 10px 2px rgba(255, 255, 255, 0.8), inset 0 1px 3px rgba(0,0,0,0.1)';
-       track.style.borderColor = 'rgba(255, 255, 255, 0.9)';
+       track.style.boxShadow = '0 0 10px 2px rgba(255, 255, 255, 0.7), inset 0 1px 3px rgba(0,0,0,0.1)';
+       track.style.borderColor = 'var(--color-text-primary)';
     } else {
-       if (t > globalMaxEnds[i] && globalMaxEnds[i] > 0) {
+       if (isFinished) {
           row.style.filter = 'grayscale(50%)';
           row.style.opacity = '0.7';
        } else {
@@ -1038,11 +1126,11 @@ function updateAnim(t){
       if (uniqueTyperIds.length > 0) {
           const namesHTML = uniqueTyperIds.map(id => {
               const m = members[id] || members[0] || {color:'#000'};
-              return `<span style="color:${m.color}; font-weight:600;">${m.name}</span>`;
+              return `<span style="color:${m.color}; font-weight:700;">${m.name}</span>`;
           }).join(' <span style="color:var(--color-text-secondary);">&</span> ');
           
           const verb = uniqueTyperIds.length > 1 ? 'are typing...' : 'is typing...';
-          typingHTML = `<span class="typing-anim">${namesHTML} <span style="color:var(--color-text-secondary);">${verb}</span></span>`;
+          typingHTML = `<span class="typing-anim">${namesHTML} <span style="color:var(--color-text-secondary); font-weight:600;">${verb}</span></span>`;
       }
   }
 
@@ -1134,18 +1222,8 @@ async function recordScreen() {
     alert("NOTA IMPORTANTE:\n\n1. En la ventana emergente, elige la opción 'Pestaña de Chrome' (NO 'Ventana' ni 'Toda la pantalla') para que la grabación sea limpia.\n2. Asegúrate de activar 'Compartir audio de la pestaña'.");
     
     const displayStream = await navigator.mediaDevices.getDisplayMedia({ 
-      video: { 
-        displaySurface: "browser",
-        width: { ideal: 1920 },
-        height: { ideal: 1080 },
-        frameRate: { ideal: 60 }
-      }, 
-      audio: {
-        echoCancellation: false,
-        noiseSuppression: false,
-        autoGainControl: false,
-        sampleRate: 48000
-      },
+      video: { displaySurface: "browser", width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 60 } }, 
+      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, sampleRate: 48000 },
       preferCurrentTab: true 
     });
     
@@ -1160,12 +1238,9 @@ async function recordScreen() {
     };
 
     const tracks = [...displayStream.getVideoTracks()];
-
     const aud = document.getElementById('main-audio');
     let audioStream = null;
-    if (aud) {
-      audioStream = aud.captureStream ? aud.captureStream() : (aud.mozCaptureStream ? aud.mozCaptureStream() : null);
-    }
+    if (aud) audioStream = aud.captureStream ? aud.captureStream() : (aud.mozCaptureStream ? aud.mozCaptureStream() : null);
 
     if (audioStream && audioStream.getAudioTracks().length > 0) {
       tracks.push(audioStream.getAudioTracks()[0]);
@@ -1174,15 +1249,8 @@ async function recordScreen() {
     }
 
     const combinedStream = new MediaStream(tracks);
-    
-    const options = { 
-        videoBitsPerSecond: 8000000,
-        audioBitsPerSecond: 192000
-    };
-    
-    if (MediaRecorder.isTypeSupported('video/webm; codecs=vp9')) {
-      options.mimeType = 'video/webm; codecs=vp9';
-    }
+    const options = { videoBitsPerSecond: 8000000, audioBitsPerSecond: 192000 };
+    if (MediaRecorder.isTypeSupported('video/webm; codecs=vp9')) options.mimeType = 'video/webm; codecs=vp9';
 
     const recorder = new MediaRecorder(combinedStream, options);
     const chunks = [];
@@ -1293,6 +1361,7 @@ function exportData() {
     segments: segments, 
     songTitle: songTitle, 
     songDur: document.getElementById('song-dur').value,
+    projectBgColor: projectBgColor,
     projectBg: projectBg,     
     currentVideoId: currentVideoId 
   };
@@ -1338,7 +1407,9 @@ function importData(e) {
       
       if (data.songTitle !== undefined) document.getElementById('song-title').value = data.songTitle;
       if (data.songDur !== undefined) document.getElementById('song-dur').value = data.songDur;
-      if (data.projectBg) { projectBg = data.projectBg; applyBg(); }
+      
+      projectBgColor = data.projectBgColor || '';
+      projectBg = data.projectBg || '';
       
       if (data.currentVideoId) {
         document.getElementById('yt-url').value = data.currentVideoId;
@@ -1366,7 +1437,7 @@ function importData(e) {
       buildChatEvents();
       
       if(document.getElementById('tab-stats').classList.contains('active')) renderStats();
-      if(document.getElementById('tab-animate').classList.contains('active')) { buildBars(); updateAnim(0); }
+      if(document.getElementById('tab-animate').classList.contains('active')) { applyBg(); buildBars(); updateAnim(0); }
       
     } catch (err) { 
       console.error(err);
@@ -1376,7 +1447,7 @@ function importData(e) {
   reader.readAsText(file); e.target.value = ''; 
 }
 
-initDisplayState();renderM();renderS();updateAnim(0);
+initDisplayState();renderM();renderS();
 </script>
 </body>
 </html>
