@@ -88,7 +88,7 @@ textarea{resize:vertical;padding:8px;}
 }
 
 /* Columnas con Scroll interno */
-#left-panel { flex: 1; position: relative; z-index: 2; display: flex; flex-direction: column; padding: 1.5rem 20px; overflow-y: auto; }
+#left-panel { flex: 1; position: relative; z-index: 2; display: flex; flex-direction: column; justify-content: center; padding: 1.5rem 20px; overflow-y: auto; }
 #center-panel { 
   flex: 1.5; 
   position: relative; 
@@ -124,12 +124,12 @@ textarea{resize:vertical;padding:8px;}
 
 /* BARRAS: Grid alineado forzando el ancho de los nombres */
 #bars-container { 
-  position: relative; width: 100%; margin: auto 0; /* Auto margin para centrar dinámicamente */
+  position: relative; width: 100%; margin: auto 0; 
 }
 .hbar-row {
   position: absolute;
-  left: 0; right: 0; height: 46px; /* Altura de la tarjeta */
-  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), filter 1s ease, opacity 1s ease;
+  left: 0; right: 0; height: 46px;
+  transition: transform 0.5s ease-out, filter 1s ease, opacity 1s ease; /* Transición sutil sin rebote */
   will-change: transform;
 }
 .hbar-name {
@@ -158,7 +158,7 @@ textarea{resize:vertical;padding:8px;}
 
 /* CHAT Y ANIMACIONES (Forzando Scroll Up) */
 #chat-history { 
-  flex: 1 1 0; /* Permite que el bloque respete la altura del panel derecho y haga scroll */
+  flex: 1 1 0; 
   min-height: 0;
   overflow-y: auto; 
   display: flex; 
@@ -184,7 +184,7 @@ textarea{resize:vertical;padding:8px;}
 #left-panel::-webkit-scrollbar { width: 6px; }
 #left-panel::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 4px; }
 
-/* Ocultar menús y ocultar el RATÓN al grabar pantalla */
+/* Ocultar menús y RATÓN al grabar pantalla */
 body.recording-active .tabs,
 body.recording-active .anim-controls,
 body.recording-active #scrubber-row,
@@ -196,7 +196,6 @@ body.recording-active #anim-stage {
   margin: 0 !important;
   border-radius: 0;
 }
-/* OCULTAR CURSOR DURANTE GRABACIÓN */
 body.recording-active, body.recording-active * {
   cursor: none !important;
 }
@@ -291,21 +290,22 @@ body.recording-active, body.recording-active * {
         <div id="bars-container"></div>
       </div>
       
-      <!-- Centro: Youtube y Rueda -->
+      <!-- Centro: Youtube y Rueda Ampliada -->
       <div id="center-panel">
         <div id="yt-container">
           <div id="yt-player"></div>
         </div>
         <div id="live-stats-container" style="display:flex; justify-content:center; align-items:center; flex:1; width:100%;">
-            <div style="position:relative; width:180px; height:180px;">
-                <canvas id="live-donut-canvas" width="180" height="180" style="position:absolute; top:0; left:0;"></canvas>
+            <!-- Tamaño ampliado proporcionalmente -->
+            <div style="position:relative; width:240px; height:240px;">
+                <canvas id="live-donut-canvas" width="240" height="240" style="position:absolute; top:0; left:0;"></canvas>
                 <div id="live-donut-center" style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
                 </div>
             </div>
         </div>
       </div>
       
-      <!-- Derecha: Lyrics que scrollean -->
+      <!-- Derecha: Lyrics que scrollean hacia arriba -->
       <div id="right-panel">
         <div id="chat-history"></div>
         <div id="typing-indicator-wrap">
@@ -362,6 +362,7 @@ const PAL=[
 let members=[
   {name:'Jin', group:'', color:PAL[0], avatar:''},
   {name:'Suga', group:'', color:PAL[1], avatar:''},
+  {name:'J-Hope', group:'', color:PAL[2], avatar:''},
   {name:'ALL', group:'', color:PAL[8], avatar:''}, 
 ];
 let segments=[
@@ -422,11 +423,11 @@ function onPlayerReady(event) { document.getElementById('song-dur').value = Math
 function onPlayerStateChange(event) {
   if (event.data == YT.PlayerState.PLAYING && !playing) {
     playing = true;
-    document.querySelectorAll('.play-toggle-btn').forEach(btn => document.querySelectorAll('.play-toggle-btn').innerHTML='<i class="ti ti-player-pause"></i> Pausa');
+    document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-pause"></i> Pausa');
     animId = requestAnimationFrame(loop);
   } else if ((event.data == YT.PlayerState.PAUSED || event.data == YT.PlayerState.ENDED) && playing) {
     playing = false;
-    document.querySelectorAll('.play-toggle-btn').forEach(btn => document.querySelectorAll('.play-toggle-btn').innerHTML='<i class="ti ti-player-play"></i> Play');
+    document.querySelectorAll('.play-toggle-btn').forEach(btn => btn.innerHTML='<i class="ti ti-player-play"></i> Play');
     if(animId) cancelAnimationFrame(animId);
   }
 }
@@ -781,7 +782,7 @@ function drawLiveDonut(totals) {
   const canvas = document.getElementById('live-donut-canvas');
   if(!canvas) return;
   const ctx = canvas.getContext('2d');
-  const W = canvas.width, H = canvas.height, cx = W/2, cy = H/2, R = 75, r = 55;
+  const W = canvas.width, H = canvas.height, cx = W/2, cy = H/2, R = 100, r = 74; // Rueda más grande
   
   const validTotals = totals.filter((_, i) => isDisplayableMember(members[i]));
   const liveTotal = validTotals.reduce((a,b)=>a+b,0) || 1;
@@ -822,13 +823,13 @@ function drawLiveDonut(totals) {
   const centerDiv = document.getElementById('live-donut-center');
   if (centerDiv && topMember && maxTotal > 0) {
       let avHTML = topMember.avatar 
-          ? `<img src="${topMember.avatar}" style="width:48px;height:48px;border-radius:50%;object-fit:cover; border:2px solid ${topMember.color}; margin-bottom:4px;">` 
-          : `<div style="width:48px;height:48px;border-radius:50%;background:${topMember.color}; margin-bottom:4px;"></div>`;
+          ? `<img src="${topMember.avatar}" style="width:64px;height:64px;border-radius:50%;object-fit:cover; border:3px solid ${topMember.color}; margin-bottom:6px;">` 
+          : `<div style="width:64px;height:64px;border-radius:50%;background:${topMember.color}; margin-bottom:6px;"></div>`;
       
       centerDiv.innerHTML = `
           ${avHTML}
-          <div style="font-weight:700; font-size:22px; line-height:1; color:var(--color-text-primary); text-shadow:0px 1px 2px rgba(0,0,0,0.2);">${pctTop}%</div>
-          <div style="font-size:11px; color:var(--color-text-primary); text-transform:uppercase; letter-spacing:0.05em; max-width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-shadow:0px 1px 2px rgba(0,0,0,0.2);">${topMember.name}</div>
+          <div style="font-weight:700; font-size:32px; line-height:1; color:var(--color-text-primary); text-shadow:0px 1px 2px rgba(0,0,0,0.2);">${pctTop}%</div>
+          <div style="font-size:14px; color:var(--color-text-primary); text-transform:uppercase; letter-spacing:0.05em; max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-shadow:0px 1px 2px rgba(0,0,0,0.2);">${topMember.name}</div>
       `;
   } else if (centerDiv) {
       centerDiv.innerHTML = '';
@@ -868,14 +869,13 @@ function buildChatEvents() {
           let sameMember = seg.memberId === prevSeg.memberId;
           let gap = seg.start - currentBubble.end;
           
-          // Contamos las líneas visuales actuales en la burbuja (excluyendo las fusionadas con '+')
           let visualLines = currentBubble.segments.filter(s => !(s.lyric || '').trim().startsWith('+')).length;
           
+          // Agrupamos si tiene un + O (mismo miembro + pausa menor a 2.5 seg + no excede 4 líneas)
           if (isPlus) {
               currentBubble.segments.push(seg);
               currentBubble.end = Math.max(currentBubble.end, seg.end);
           } else if (sameMember && gap < 2.5 && visualLines < 4) {
-              // Si es el mismo miembro, hay poco hueco y no superamos 4 líneas visuales, lo metemos en la burbuja
               currentBubble.segments.push(seg);
               currentBubble.end = Math.max(currentBubble.end, seg.end);
           } else {
@@ -1036,7 +1036,9 @@ function updateAnim(t){
   let activeSingers = new Set();
   actives.forEach(s => { getIncludedMembers(s.memberId).forEach(idx => activeSingers.add(idx)); });
 
-  const ROW_HEIGHT = 58; // Altura caja + margen
+  const ROW_HEIGHT = 58; 
+  const isDark = document.body.classList.contains('dark-theme');
+
   members.forEach((m,i)=>{
     if(!isDisplayableMember(m)) return; 
     
@@ -1064,8 +1066,13 @@ function updateAnim(t){
     if(isSinging) {
        row.style.filter = 'grayscale(0%)';
        row.style.opacity = '1';
-       track.style.boxShadow = '0 0 10px 2px rgba(255, 255, 255, 0.7), inset 0 1px 3px rgba(0,0,0,0.1)';
-       track.style.borderColor = 'var(--color-text-primary)';
+       if(isDark) {
+           track.style.boxShadow = '0 0 12px 2px rgba(255, 255, 255, 0.7), inset 0 1px 3px rgba(0,0,0,0.1)';
+           track.style.borderColor = 'rgba(255, 255, 255, 0.9)';
+       } else {
+           track.style.boxShadow = `0 0 12px 2px ${m.color}b3, inset 0 1px 3px rgba(0,0,0,0.1)`;
+           track.style.borderColor = m.color;
+       }
     } else {
        if (isFinished) {
           row.style.filter = 'grayscale(50%)';
