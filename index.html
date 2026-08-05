@@ -124,12 +124,12 @@ textarea{resize:vertical;padding:8px;}
 
 /* BARRAS: Grid alineado forzando el ancho de los nombres */
 #bars-container { 
-  position: relative; width: 100%; margin: auto 0; 
+  position: relative; width: 100%; margin: auto 0; /* Auto margin para centrar dinámicamente */
 }
 .hbar-row {
   position: absolute;
-  left: 0; right: 0; height: 46px;
-  transition: transform 0.5s ease-out, filter 1s ease, opacity 1s ease; /* Transición sutil sin rebote */
+  left: 0; right: 0; height: 46px; /* Altura de la tarjeta */
+  transition: transform 0.5s ease-out, filter 1s ease, opacity 1s ease;
   will-change: transform;
 }
 .hbar-name {
@@ -946,17 +946,27 @@ function renderChatHistory(visibleEvents, t) {
               if (isPlus) text = text.replace(/^\+\s*/, '');
               
               const progress = Math.max(0, Math.min(1, (t - seg.start) / (seg.end - seg.start)));
-              const pct = progress * 100;
               
-              let bgStyle = '';
-              if (pct >= 100) {
-                  bgStyle = `color: ${m.color};`; 
-              } else {
-                  const gradient = `linear-gradient(to right, ${m.color} ${Math.max(0, pct - 8)}%, var(--color-text-secondary) ${Math.min(100, pct + 2)}%)`;
-                  bgStyle = `background: ${gradient}; -webkit-background-clip: text; -webkit-text-fill-color: transparent; color: transparent;`;
-              }
+              // NUEVO: PINTADO PALABRA POR PALABRA (Smooth line wrapper)
+              let words = text.split(' ');
+              let wordsHtml = words.map((w, wIdx) => {
+                  let wStart = wIdx / words.length;
+                  let wEnd = (wIdx + 1) / words.length;
+                  let wStyle = '';
+                  
+                  if (progress >= wEnd) {
+                      wStyle = `color: ${m.color};`; 
+                  } else if (progress <= wStart) {
+                      wStyle = `color: var(--color-text-secondary);`;
+                  } else {
+                      let wordProgress = (progress - wStart) / (wEnd - wStart);
+                      let pct = wordProgress * 100;
+                      wStyle = `background: linear-gradient(to right, ${m.color} ${Math.max(0, pct - 10)}%, var(--color-text-secondary) ${Math.min(100, pct + 10)}%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; color: transparent;`;
+                  }
+                  return `<span style="${wStyle}">${w}</span>`;
+              }).join(' ');
               
-              let spanHtml = `<span id="lyric-text-${seg.originalIndex}" style="font-size:16px;letter-spacing:.01em;font-weight:700; display:inline-block; ${bgStyle}">${text}</span>`;
+              let spanHtml = `<span id="lyric-text-${seg.originalIndex}" style="font-size:16px;letter-spacing:.01em;font-weight:700; display:inline;">${wordsHtml}</span>`;
               
               if (isPlus && i > 0) {
                   linesHtml += `&nbsp;${spanHtml}`;
@@ -998,20 +1008,45 @@ function updateActiveKaraoke(visibleEvents, t) {
           ev.bubble.segments.forEach(seg => {
               const el = document.getElementById(`lyric-text-${seg.originalIndex}`);
               if(el) {
+                  const m = members[seg.memberId] || members[0] || {color:'#000'};
                   if(t >= seg.end) {
-                      const m = members[seg.memberId] || members[0] || {color:'#000'};
-                      el.style.background = 'none';
-                      el.style.webkitBackgroundClip = 'initial';
-                      el.style.webkitTextFillColor = 'initial';
-                      el.style.color = m.color;
-                  } else if (t >= seg.start && t < ev.end) {
-                      const m = members[seg.memberId] || members[0] || {color:'#000'};
+                      Array.from(el.children).forEach(child => {
+                          child.style.background = 'none';
+                          child.style.webkitTextFillColor = 'initial';
+                          child.style.color = m.color;
+                      });
+                  } else if (t >= seg.start && t < seg.end) {
                       const progress = Math.max(0, Math.min(1, (t - seg.start) / (seg.end - seg.start)));
-                      const pct = progress * 100;
-                      el.style.background = `linear-gradient(to right, ${m.color} ${Math.max(0, pct - 8)}%, var(--color-text-secondary) ${Math.min(100, pct + 2)}%)`;
-                      el.style.webkitBackgroundClip = 'text';
-                      el.style.webkitTextFillColor = 'transparent';
-                      el.style.color = 'transparent';
+                      const children = Array.from(el.children);
+                      const total = children.length;
+                      
+                      children.forEach((child, idx) => {
+                          let wStart = idx / total;
+                          let wEnd = (idx + 1) / total;
+                          
+                          if (progress >= wEnd) {
+                              child.style.background = 'none';
+                              child.style.webkitTextFillColor = 'initial';
+                              child.style.color = m.color;
+                          } else if (progress <= wStart) {
+                              child.style.background = 'none';
+                              child.style.webkitTextFillColor = 'initial';
+                              child.style.color = 'var(--color-text-secondary)';
+                          } else {
+                              let wordProgress = (progress - wStart) / (wEnd - wStart);
+                              let pct = wordProgress * 100;
+                              child.style.background = `linear-gradient(to right, ${m.color} ${Math.max(0, pct - 10)}%, var(--color-text-secondary) ${Math.min(100, pct + 10)}%)`;
+                              child.style.webkitBackgroundClip = 'text';
+                              child.style.webkitTextFillColor = 'transparent';
+                              child.style.color = 'transparent';
+                          }
+                      });
+                  } else {
+                      Array.from(el.children).forEach(child => {
+                          child.style.background = 'none';
+                          child.style.webkitTextFillColor = 'initial';
+                          child.style.color = 'var(--color-text-secondary)';
+                      });
                   }
               }
           });
@@ -1417,6 +1452,7 @@ function importData(e) {
       
       projectBgColor = data.projectBgColor || '';
       projectBg = data.projectBg || '';
+      applyBg();
       
       if (data.currentVideoId) {
         document.getElementById('yt-url').value = data.currentVideoId;
