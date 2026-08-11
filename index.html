@@ -124,7 +124,7 @@ textarea{resize:vertical;padding:8px;}
 
 /* BARRAS: Grid alineado forzando el ancho de los nombres */
 #bars-container { 
-  position: relative; width: 100%; margin: auto 0; /* Auto margin para centrar dinámicamente */
+  position: relative; width: 100%; margin: auto 0; 
 }
 .hbar-row {
   position: absolute;
@@ -855,31 +855,64 @@ function buildChatEvents() {
   let bubbles = [];
   let currentBubble = null;
 
+  // Lógica actualizada: Cortamos el bocadillo si tiene 5 o más líneas visuales (4 max)
   let sortedSegs = [...segments].map((s, i) => ({...s, originalIndex: i})).sort((a,b) => a.start - b.start);
+
+  // Fase 1: Agrupar por líneas visuales primero
+  let visualLines = [];
+  let currentLine = null;
 
   sortedSegs.forEach((seg) => {
       let text = (seg.lyric || '').trim();
       let isPlus = text.startsWith('+');
       
+      if (isPlus && currentLine) {
+          currentLine.segments.push(seg);
+          currentLine.end = Math.max(currentLine.end, seg.end);
+          getDisplayMembers(seg.memberId).forEach(id => currentLine.memberSet.add(id));
+      } else {
+          let mSet = new Set(getDisplayMembers(seg.memberId));
+          currentLine = {
+              start: seg.start,
+              end: seg.end,
+              segments: [seg],
+              memberSet: mSet
+          };
+          visualLines.push(currentLine);
+      }
+  });
+
+  // Fase 2: Agrupar líneas visuales en burbujas con límite de 4
+  visualLines.forEach(vl => {
       if (!currentBubble) {
-          currentBubble = { segments: [seg], start: seg.start, end: seg.end };
+          currentBubble = { 
+              segments: [...vl.segments], 
+              start: vl.start, 
+              end: vl.end, 
+              memberSet: new Set(vl.memberSet),
+              visualLineCount: 1 
+          };
           bubbles.push(currentBubble);
       } else {
-          let prevSeg = currentBubble.segments[currentBubble.segments.length - 1];
-          let sameMember = seg.memberId === prevSeg.memberId;
-          let gap = seg.start - currentBubble.end;
+          let gap = vl.start - currentBubble.end;
           
-          let visualLines = currentBubble.segments.filter(s => !(s.lyric || '').trim().startsWith('+')).length;
+          let isSameMembers = false;
+          if (currentBubble.memberSet.size === vl.memberSet.size) {
+              isSameMembers = [...currentBubble.memberSet].every(id => vl.memberSet.has(id));
+          }
           
-          // Agrupamos si tiene un + O (mismo miembro + pausa menor a 2.5 seg + no excede 4 líneas)
-          if (isPlus) {
-              currentBubble.segments.push(seg);
-              currentBubble.end = Math.max(currentBubble.end, seg.end);
-          } else if (sameMember && gap < 2.5 && visualLines < 4) {
-              currentBubble.segments.push(seg);
-              currentBubble.end = Math.max(currentBubble.end, seg.end);
+          if (isSameMembers && gap < 2.5 && currentBubble.visualLineCount < 4) {
+              currentBubble.segments.push(...vl.segments);
+              currentBubble.end = Math.max(currentBubble.end, vl.end);
+              currentBubble.visualLineCount++;
           } else {
-              currentBubble = { segments: [seg], start: seg.start, end: seg.end };
+              currentBubble = { 
+                  segments: [...vl.segments], 
+                  start: vl.start, 
+                  end: vl.end, 
+                  memberSet: new Set(vl.memberSet),
+                  visualLineCount: 1 
+              };
               bubbles.push(currentBubble);
           }
       }
@@ -947,7 +980,6 @@ function renderChatHistory(visibleEvents, t) {
               
               const progress = Math.max(0, Math.min(1, (t - seg.start) / (seg.end - seg.start)));
               
-              // NUEVO: PINTADO PALABRA POR PALABRA (Smooth line wrapper)
               let words = text.split(' ');
               let wordsHtml = words.map((w, wIdx) => {
                   let wStart = wIdx / words.length;
@@ -982,7 +1014,6 @@ function renderChatHistory(visibleEvents, t) {
               if (seg.translation) transHtml += `<div style="font-size:12px; color:var(--color-text-secondary); margin-top:2px; font-weight:400;">${seg.translation}</div>`;
           });
 
-          // EL MENSAJE EN UNA CAJA (ANIM-BOX)
           html += `
             <div class="anim-box" style="margin-bottom: 0px; flex-shrink: 0; ${animStyle}">
               <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
@@ -1085,7 +1116,6 @@ function updateAnim(t){
     fill.style.width=targetWidth.toFixed(2)+'%'; 
     secs.textContent=totals[i].toFixed(1)+'s';
     
-    const box = row.querySelector('.anim-box');
     const track = row.querySelector('.hbar-track');
     const status = document.getElementById('status-'+i);
     
@@ -1186,7 +1216,6 @@ function updateAnim(t){
   }
 }
 
-// Sincronización suave con YouTube
 function loop(ts){
   if(!playing)return;
   
@@ -1452,7 +1481,6 @@ function importData(e) {
       
       projectBgColor = data.projectBgColor || '';
       projectBg = data.projectBg || '';
-      applyBg();
       
       if (data.currentVideoId) {
         document.getElementById('yt-url').value = data.currentVideoId;
